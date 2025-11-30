@@ -3,7 +3,8 @@
     public class InvoiceDto
     {
         public int InvoiceID { get; set; }
-        public DateTime InvoiceDate { get; set; }
+        public DateTime InvoiceDate { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+
         public DateTime DueDate { get; set; }
         public decimal TotalAmount { get; set; }
         public bool IsPaid { get; set; }

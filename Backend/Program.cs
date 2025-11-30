@@ -17,7 +17,13 @@ builder.Services.AddCors(options =>
         });
 });
 // Контроллеры
-builder.Services.AddControllers();
+// Контроллеры с настройкой JSON в camelCase
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {

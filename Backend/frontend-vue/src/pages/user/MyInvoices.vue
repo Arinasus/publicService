@@ -1,23 +1,100 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-type Invoice = { id: number; amount: number; status: 'Оплачен' | 'Не оплачен' }
+
+type Invoice = {
+  invoiceID: number
+  invoiceDate: string
+  dueDate: string
+  totalAmount: number
+  isPaid: boolean
+  contractNumber: string
+}
+
 const invoices = ref<Invoice[]>([])
+const loading = ref(true)
+const error = ref<string | null>(null)
+
 onMounted(async () => {
-  // TODO: GET /api/user/invoices
-  invoices.value = [
-    { id: 101, amount: 24.87, status: 'Оплачен' },
-    { id: 102, amount: 18.34, status: 'Не оплачен' },
-  ]
+  try {
+    const res = await fetch(import.meta.env.VITE_API_URL + '/Invoices', {
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (!res.ok) {
+      throw new Error(`Ошибка загрузки: ${res.status}`)
+    }
+    invoices.value = await res.json()
+  } catch (err: any) {
+    error.value = err.message
+  } finally {
+    loading.value = false
+  }
 })
+
+// Функция оплаты
+async function payInvoice(invoice: Invoice) {
+  try {
+    const res = await fetch(
+      import.meta.env.VITE_API_URL + `/Invoices/${invoice.invoiceID}/pay`,
+      { method: 'POST' }
+    )
+
+    if (!res.ok) {
+      throw new Error(`Ошибка оплаты: ${res.status}`)
+    }
+
+    // Обновляем статус локально
+    invoice.isPaid = true
+  } catch (err: any) {
+    alert(`Ошибка оплаты: ${err.message}`)
+  }
+}
 </script>
 
 <template>
-  <div>
+  <div class="page">
     <h2>Мои счета</h2>
-    <ul>
-      <li v-for="inv in invoices" :key="inv.id">
-        Счёт #{{ inv.id }} — {{ inv.amount }} BYN — {{ inv.status }}
-      </li>
-    </ul>
+
+    <div v-if="error" class="error">{{ error }}</div>
+    <div v-if="loading">Загрузка...</div>
+
+    <table v-else class="invoices">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Сумма</th>
+          <th>Статус</th>
+          <th>Срок оплаты</th>
+          <th>Действие</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="inv in invoices" :key="inv.invoiceID">
+          <td>{{ inv.invoiceID }}</td>
+          <td>{{ inv.totalAmount ? inv.totalAmount.toFixed(2) : '—' }} BYN</td>
+          <td>
+            <span :class="inv.isPaid ? 'paid' : 'unpaid'">
+              {{ inv.isPaid ? 'Оплачен' : 'Не оплачен' }}
+            </span>
+          </td>
+          <td>{{ new Date(inv.dueDate).toLocaleDateString('ru-RU') }}</td>
+          <td>
+            <button v-if="!inv.isPaid" @click="payInvoice(inv)">Оплатить</button>
+            <span v-else>—</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
+
+<style scoped>
+.page { padding: 20px; }
+.error { color: red; margin-bottom: 10px; }
+.invoices { width: 100%; border-collapse: collapse; }
+.invoices th, .invoices td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+.invoices th { background-color: #f4f4f4; }
+.paid { color: green; font-weight: bold; }
+.unpaid { color: red; font-weight: bold; }
+button { padding: 6px 12px; background-color: #0078d7; color: white; border: none; border-radius: 4px; cursor: pointer; }
+button:hover { background-color: #005a9e; }
+</style>
