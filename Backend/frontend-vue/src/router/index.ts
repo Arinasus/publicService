@@ -17,19 +17,19 @@ const routes: RouteRecordRaw[] = [
     path: '/me',
     name: 'profile',
     component: () => import('../pages/user/Profile.vue'),
-    meta: { auth: true, role: ['user', 'admin'] as Role[] },
+    meta: { auth: true, role: ['user', 'admin'] },
   },
   {
     path: '/my-services',
     name: 'my-services',
     component: () => import('../pages/user/MyServices.vue'),
-    meta: { auth: true, role: ['user', 'admin'] as Role[] },
+    meta: { auth: true, role: ['user', 'admin'] },
   },
   {
     path: '/my-invoices',
     name: 'my-invoices',
     component: () => import('../pages/user/MyInvoices.vue'),
-    meta: { auth: true, role: ['user', 'admin'] as Role[] },
+    meta: { auth: true, role: ['user', 'admin'] },
   },
 
   // admin
@@ -37,25 +37,25 @@ const routes: RouteRecordRaw[] = [
     path: '/admin',
     name: 'admin-dashboard',
     component: () => import('../pages/admin/Dashboard.vue'),
-    meta: { auth: true, role: ['admin'] as Role[] },
+    meta: { auth: true, role: ['admin'] },
   },
   {
     path: '/admin/users',
     name: 'admin-users',
     component: () => import('../pages/admin/Users.vue'),
-    meta: { auth: true, role: ['admin'] as Role[] },
+    meta: { auth: true, role: ['admin'] },
   },
   {
     path: '/admin/services',
     name: 'admin-services',
     component: () => import('../pages/admin/Services.vue'),
-    meta: { auth: true, role: ['admin'] as Role[] },
+    meta: { auth: true, role: ['admin'] },
   },
   {
     path: '/admin/invoices',
     name: 'admin-invoices',
     component: () => import('../pages/admin/Invoices.vue'),
-    meta: { auth: true, role: ['admin'] as Role[] },
+    meta: { auth: true, role: ['admin'] },
   },
 
   { path: '/:pathMatch(.*)*', name: 'notfound', component: () => import('../pages/NotFound.vue') },
@@ -68,15 +68,15 @@ const router = createRouter({
 
 router.beforeEach((to: RouteLocationNormalized) => {
   const auth = getAuth()
+  const meta = to.meta
 
   // Требуется авторизация
-  if (to.meta && (to.meta as any).auth && !auth?.token) {
+  if (meta.auth && !auth?.token) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
   // Проверка роли
-  const allowedRoles = (to.meta && (to.meta as any).role) as Role[] | undefined
-  if (allowedRoles && auth?.role && !allowedRoles.includes(auth.role)) {
+  if (meta.role && auth?.role && !meta.role.includes(auth.role)) {
     return { name: auth.role === 'admin' ? 'admin-dashboard' : 'home' }
   }
 })

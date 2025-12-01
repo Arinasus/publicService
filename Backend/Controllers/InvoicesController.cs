@@ -62,7 +62,30 @@ namespace Backend.Controllers
             return Ok(invoice);
         }
 
-        // POST: api/Invoices
+        // POST: api/Invoices/{id}/pay
+        [HttpPost("{id}/pay")]
+        public async Task<IActionResult> PayInvoice(int id)
+        {
+            var invoice = await _context.Invoices.FindAsync(id);
+            if (invoice == null)
+            {
+                return NotFound();
+            }
+
+            if (invoice.IsPaid)
+            {
+                return BadRequest("Invoice already paid");
+            }
+
+            invoice.IsPaid = true;
+            invoice.PaymentDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Invoice paid successfully" });
+        }
+
+
         // POST: api/Invoices
         [HttpPost]
         public async Task<ActionResult<InvoiceDto>> PostInvoice(InvoiceDto dto)

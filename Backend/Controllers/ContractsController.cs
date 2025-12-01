@@ -53,7 +53,6 @@ namespace Backend.Controllers
         }
 
         // POST: api/Contracts
-        // POST: api/Contracts
         [HttpPost]
         public async Task<IActionResult> CreateContract([FromBody] ContractCreateDto contractDto)
         {

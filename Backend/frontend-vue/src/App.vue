@@ -8,6 +8,8 @@
       <router-link to="/my-invoices">Мои счета</router-link>
       <router-link to="/admin">Админ</router-link>
       <router-link to="/admin/users">Пользователи</router-link>
+      <router-link to="/admin/services">Услуги</router-link>
+      <router-link to="/admin/invoices">Счета</router-link>
     </nav>
     <main class="content">
       <router-view />
@@ -15,8 +17,22 @@
   </div>
 </template>
 
-<style>
-.nav { display: flex; gap: 12px; padding: 10px; border-bottom: 1px solid #eee; }
-.nav a { text-decoration: none; }
-.content { padding: 16px; }
+<style scoped>
+.nav {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+.nav a {
+  text-decoration: none;
+  color: #0078d7;
+  font-weight: 500;
+}
+.nav a.router-link-active {
+  text-decoration: underline;
+}
+.content {
+  padding: 16px;
+}
 </style>
