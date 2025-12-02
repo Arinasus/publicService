@@ -6,6 +6,7 @@
       <router-link to="/me">Профиль</router-link>
       <router-link to="/my-services">Мои услуги</router-link>
       <router-link to="/my-invoices">Мои счета</router-link>
+      <router-link to="/my-notifications">Мои уведомления</router-link>
       <router-link to="/admin">Админ</router-link>
       <router-link to="/admin/users">Пользователи</router-link>
       <router-link to="/admin/services">Услуги</router-link>

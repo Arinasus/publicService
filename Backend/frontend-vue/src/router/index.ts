@@ -57,6 +57,13 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../pages/admin/Invoices.vue'),
     meta: { auth: true, role: ['admin'] },
   },
+  {
+    path: '/my-notifications',
+    name: 'my-notifications',
+    component: () => import('../pages/user/MyNotifications.vue'),
+    meta: { auth: true, role: ['user', 'admin'] },
+  },
+
 
   { path: '/:pathMatch(.*)*', name: 'notfound', component: () => import('../pages/NotFound.vue') },
 ]
