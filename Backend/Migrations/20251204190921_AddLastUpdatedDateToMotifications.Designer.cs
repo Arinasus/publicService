@@ -3,6 +3,7 @@ using System;
 using Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend.Migrations
 {
     [DbContext(typeof(UtilitiesDbContext))]
-    partial class UtilitiesDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251204190921_AddLastUpdatedDateToMotifications")]
+    partial class AddLastUpdatedDateToMotifications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -192,31 +195,6 @@ namespace Backend.Migrations
                     b.HasIndex("UserID");
 
                     b.ToTable("Notifications", "public");
-                });
-
-            modelBuilder.Entity("Backend.Models.NotificationHistory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("ChangedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ChangedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("NotificationID")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NotificationID");
-
-                    b.ToTable("NotificationHistory", "public");
                 });
 
             modelBuilder.Entity("Backend.Models.Payment", b =>
@@ -436,17 +414,6 @@ namespace Backend.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Backend.Models.NotificationHistory", b =>
-                {
-                    b.HasOne("Backend.Models.Notification", "Notification")
-                        .WithMany("History")
-                        .HasForeignKey("NotificationID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Notification");
-                });
-
             modelBuilder.Entity("Backend.Models.Payment", b =>
                 {
                     b.HasOne("Backend.Models.Invoice", "Invoice")
@@ -480,11 +447,6 @@ namespace Backend.Migrations
             modelBuilder.Entity("Backend.Models.Address", b =>
                 {
                     b.Navigation("UserAddresses");
-                });
-
-            modelBuilder.Entity("Backend.Models.Notification", b =>
-                {
-                    b.Navigation("History");
                 });
 
             modelBuilder.Entity("Backend.Models.User", b =>

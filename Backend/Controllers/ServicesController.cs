@@ -41,6 +41,10 @@ namespace Backend.Controllers
         [HttpPost]
         public async Task<ActionResult<Service>> PostService(Service service)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             _context.Services.Add(service);
             await _context.SaveChangesAsync();
 
@@ -55,7 +59,10 @@ namespace Backend.Controllers
             {
                 return BadRequest();
             }
-
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             _context.Entry(service).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 

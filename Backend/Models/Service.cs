@@ -11,5 +11,7 @@ namespace Backend.Models
 
         [Required, StringLength(20)]
         public string UnitOfMeasure { get; set; } = string.Empty;
+        [Range(0, 100000)]
+        public decimal Price { get; set; }
     }
 }

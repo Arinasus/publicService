@@ -11,6 +11,7 @@
       <router-link to="/admin/users">Пользователи</router-link>
       <router-link to="/admin/services">Услуги</router-link>
       <router-link to="/admin/invoices">Счета</router-link>
+      <router-link to="/admin/notifications">Уведомления</router-link>
     </nav>
     <main class="content">
       <router-view />

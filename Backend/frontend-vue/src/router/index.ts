@@ -58,6 +58,12 @@ const routes: RouteRecordRaw[] = [
     meta: { auth: true, role: ['admin'] },
   },
   {
+    path: '/admin/notifications',
+    name: 'admin-notifications',
+    component: () => import('../pages/admin/Notifications.vue'),
+    meta: { auth: true, role: ['admin'] },
+  },
+  {
     path: '/my-notifications',
     name: 'my-notifications',
     component: () => import('../pages/user/MyNotifications.vue'),

@@ -13,7 +13,8 @@ builder.Services.AddCors(options =>
         {
             policy.WithOrigins("http://localhost:8081") // адрес фронта
                   .AllowAnyHeader()
-                  .AllowAnyMethod();
+                  .AllowAnyMethod()
+                  .AllowCredentials();
         });
 });
 // Контроллеры
