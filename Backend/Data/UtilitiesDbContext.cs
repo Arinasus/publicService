@@ -20,6 +20,7 @@ namespace Backend.Data
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<UserAddress> UserAddresses { get; set; }
         public DbSet<MeterReading> MeterReadings { get; set; }
+        public DbSet<AuthToken> AuthTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

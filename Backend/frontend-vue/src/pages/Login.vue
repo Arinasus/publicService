@@ -9,12 +9,24 @@ const password = ref('')
 const role = ref<'admin'|'user'>('user')
 
 async function login() {
-     // TODO: заменить на реальный POST /api/auth/login и брать role из ответа
-    const token = 'demo-token'
-    localStorage.setItem('auth', JSON.stringify({ token, role: role.value }))
-    const redirect = (route.query.redirect as string) ?? (role.value === 'admin' ? '/admin' : '/')
-    router.push(redirect)
+  const res = await fetch(import.meta.env.VITE_API_URL + '/Auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email.value, password: password.value })
+  })
+
+  if (!res.ok) {
+    alert('Ошибка входа')
+    return
+  }
+
+  const data = await res.json()
+  localStorage.setItem('auth', JSON.stringify(data))
+
+  const redirect = (route.query.redirect as string) ?? (data.role === 'admin' ? '/admin' : '/')
+  router.push(redirect)
 }
+
 </script>
 <template>
   <div>

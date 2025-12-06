@@ -61,6 +61,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage(); // Показывает детальные ошибки
 }
+app.UseRouting();
 app.UseCors("AllowFrontend");
 // Swagger
 app.UseSwagger();

@@ -1,0 +1,102 @@
+-- Таблица пользователей
+CREATE TABLE Users (
+  UserID SERIAL PRIMARY KEY,
+  FirstName VARCHAR(255) NOT NULL,
+  LastName VARCHAR(255) NOT NULL,
+  Email VARCHAR(255) UNIQUE NOT NULL,
+  PhoneNumber VARCHAR(20),
+  PasswordHash VARCHAR(255) NOT NULL,
+  RegistrationDate DATE NOT NULL
+);
+
+-- Таблица адресов
+CREATE TABLE Addresses (
+  AddressID SERIAL PRIMARY KEY,
+  Street VARCHAR(255) NOT NULL,
+  HouseNumber VARCHAR(10) NOT NULL,
+  ApartmentNumber VARCHAR(10),
+  City VARCHAR(255) NOT NULL,
+  PostalCode VARCHAR(10) NOT NULL
+);
+
+-- Связь пользователей и адресов
+CREATE TABLE UserAddresses (
+  UserAddressID SERIAL PRIMARY KEY,
+  UserID INT NOT NULL REFERENCES Users(UserID),
+  AddressID INT NOT NULL REFERENCES Addresses(AddressID),
+  IsPrimary BOOLEAN NOT NULL DEFAULT FALSE,
+  UNIQUE (UserID, AddressID)
+);
+CREATE UNIQUE INDEX ux_user_primary_addr ON UserAddresses(UserID) WHERE IsPrimary;
+
+-- Таблица услуг
+CREATE TABLE Services (
+  ServiceID SERIAL PRIMARY KEY,
+  ServiceName VARCHAR(255) NOT NULL,
+  UnitOfMeasure VARCHAR(50) NOT NULL
+);
+
+-- Таблица поставщиков услуг
+CREATE TABLE ServiceProviders (
+  ProviderID SERIAL PRIMARY KEY,
+  ProviderName VARCHAR(255) NOT NULL,
+  ContactPerson VARCHAR(255),
+  PhoneNumber VARCHAR(20),
+  Email VARCHAR(255)
+);
+
+-- Таблица договоров
+CREATE TABLE Contracts (
+  ContractID SERIAL PRIMARY KEY,
+  UserID INT NOT NULL REFERENCES Users(UserID),
+  AddressID INT NOT NULL REFERENCES Addresses(AddressID),
+  ServiceID INT NOT NULL REFERENCES Services(ServiceID),
+  ProviderID INT NOT NULL REFERENCES ServiceProviders(ProviderID),
+  ContractNumber VARCHAR(50) NOT NULL UNIQUE,
+  ContractStartDate DATE NOT NULL,
+  ContractEndDate DATE
+);
+CREATE INDEX ix_contracts_fk ON Contracts(UserID, AddressID, ServiceID, ProviderID);
+
+-- Таблица показаний счетчиков
+CREATE TABLE MeterReadings (
+  ReadingID SERIAL PRIMARY KEY,
+  ContractID INT NOT NULL REFERENCES Contracts(ContractID) ON DELETE CASCADE,
+  ReadingDate DATE NOT NULL,
+  ReadingValue DECIMAL(12,2) NOT NULL,
+  SubmittedByUserID INT REFERENCES Users(UserID)
+);
+CREATE INDEX ix_readings_contract_date ON MeterReadings(ContractID, ReadingDate);
+
+-- Таблица счетов
+CREATE TABLE Invoices (
+  InvoiceID SERIAL PRIMARY KEY,
+  ContractID INT NOT NULL REFERENCES Contracts(ContractID) ON DELETE CASCADE,
+  InvoiceDate DATE NOT NULL,
+  DueDate DATE NOT NULL,
+  TotalAmount DECIMAL(12,2) NOT NULL,
+  IsPaid BOOLEAN NOT NULL DEFAULT FALSE,
+  PaymentDate DATE
+);
+CREATE INDEX ix_invoices_contract ON Invoices(ContractID);
+
+-- Таблица платежей
+CREATE TABLE Payments (
+  PaymentID SERIAL PRIMARY KEY,
+  InvoiceID INT NOT NULL REFERENCES Invoices(InvoiceID) ON DELETE CASCADE,
+  PaymentDate DATE NOT NULL,
+  PaymentAmount DECIMAL(12,2) NOT NULL,
+  PaymentMethod VARCHAR(50) NOT NULL
+);
+CREATE INDEX ix_payments_invoice ON Payments(InvoiceID);
+
+-- Таблица уведомлений
+CREATE TABLE Notifications (
+  NotificationID SERIAL PRIMARY KEY,
+  UserID INT NOT NULL REFERENCES Users(UserID),
+  NotificationDate TIMESTAMP NOT NULL,
+  NotificationType VARCHAR(50) NOT NULL,
+  NotificationText TEXT NOT NULL,
+  IsRead BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE INDEX ix_notifications_user_date ON Notifications(UserID, NotificationDate);
