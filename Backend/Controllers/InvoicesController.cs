@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Backend.Data;
 using Backend.Models;
 using Backend.DTOs;
+using Backend.Services;
 
 namespace Backend.Controllers
 {
@@ -63,7 +64,7 @@ namespace Backend.Controllers
         }
 
         // POST: api/Invoices/{id}/pay
-        [HttpPost("{id}/pay")]
+        /*[HttpPost("{id}/pay")]
         public async Task<IActionResult> PayInvoice(int id)
         {
             var invoice = await _context.Invoices.FindAsync(id);
@@ -83,6 +84,39 @@ namespace Backend.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Invoice paid successfully" });
+        }*/
+        [HttpPost("{id}/pay")]
+        public async Task<IActionResult> PayInvoice(int id, [FromBody] PaymentDto dto)
+        {
+            var invoice = await _context.Invoices
+                .Include(i => i.Contract)
+                .ThenInclude(c => c.User) // если у тебя есть связь с пользователем
+                .FirstOrDefaultAsync(i => i.InvoiceID == id);
+
+            if (invoice == null)
+                return NotFound();
+
+            if (invoice.IsPaid)
+                return BadRequest("Invoice already paid");
+
+            invoice.IsPaid = true;
+            invoice.PaymentDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+            await _context.SaveChangesAsync();
+
+            // Формируем DTO для чека
+            var receipt = new ReceiptDto
+            {
+                StoreName = "Utilities Service",
+                Date = DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm"),
+                Customer = invoice.Contract?.User != null  ? invoice.Contract.User.FirstName  : "Unknown",
+                InvoiceNumber = invoice.InvoiceID,
+                Amount = invoice.TotalAmount,
+                Method = dto.PaymentMethod
+            };
+
+            var pdfBytes = ReceiptPdfGenerator.Generate(receipt);
+
+            return File(pdfBytes, "application/pdf", $"receipt_{invoice.InvoiceID}.pdf");
         }
 
 

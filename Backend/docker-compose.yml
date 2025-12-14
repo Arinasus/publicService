@@ -1,24 +1,26 @@
-version: '3.9'
-
 services:
   backend:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: backend
     ports:
       - "5000:8080"
     depends_on:
       - postgres
     environment:
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=utilities;Username=util_user;Password=util_pass
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=utilities;Username=util_user;Password=util_pass"
+      TZ: Europe/Minsk
     networks:
       - appnet
 
   postgres:
     image: postgres:15
     environment:
-      - POSTGRES_USER=util_user
-      - POSTGRES_PASSWORD=util_pass
-      - POSTGRES_DB=utilities
+      POSTGRES_USER: util_user
+      POSTGRES_PASSWORD: util_pass
+      POSTGRES_DB: utilities
+      TZ: Europe/Minsk
     ports:
       - "5432:5432"
     volumes:

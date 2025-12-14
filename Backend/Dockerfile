@@ -7,14 +7,9 @@ WORKDIR /src
 COPY ["Backend.csproj", "."]
 RUN dotnet restore "Backend.csproj"
 COPY . .
-RUN dotnet build "Backend.csproj" -c Release -o /app/build
-
-FROM build AS publish
 RUN dotnet publish "Backend.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
-# Копируем папку с миграциями
-COPY --from=build /src/Migrations ./Migrations
+COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "Backend.dll"]

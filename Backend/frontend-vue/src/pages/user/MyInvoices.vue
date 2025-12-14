@@ -31,16 +31,40 @@ onMounted(async () => {
 })
 
 // Функция оплаты
+// Функция оплаты
 async function payInvoice(invoice: Invoice) {
   try {
+const body = {
+  paymentAmount: invoice.totalAmount,
+  paymentMethod: "Card"
+}
+
+
     const res = await fetch(
       import.meta.env.VITE_API_URL + `/Invoices/${invoice.invoiceID}/pay`,
-      { method: 'POST' }
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }
     )
 
     if (!res.ok) {
       throw new Error(`Ошибка оплаты: ${res.status}`)
     }
+
+    // Получаем PDF как Blob
+    const blob = await res.blob()
+    const url = window.URL.createObjectURL(blob)
+
+    // Создаём ссылку и скачиваем
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `receipt_${invoice.invoiceID}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
 
     // Обновляем статус локально
     invoice.isPaid = true
@@ -48,6 +72,7 @@ async function payInvoice(invoice: Invoice) {
     alert(`Ошибка оплаты: ${err.message}`)
   }
 }
+
 </script>
 
 <template>

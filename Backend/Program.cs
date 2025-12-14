@@ -3,8 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using AutoMapper;
 using Backend.Profiles;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.UseUrls("http://0.0.0.0:8080");
+QuestPDF.Settings.License = LicenseType.Community;
 // Добавляем CORS
 builder.Services.AddCors(options =>
 {
@@ -41,6 +44,8 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 var app = builder.Build();
 
+app.UseCors("AllowFrontend");
+app.UseRouting();
 // Применить миграции при запуске
 using (var scope = app.Services.CreateScope())
 {
@@ -61,8 +66,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage(); // Показывает детальные ошибки
 }
-app.UseRouting();
-app.UseCors("AllowFrontend");
+
 // Swagger
 app.UseSwagger();
 app.UseSwaggerUI(c =>
