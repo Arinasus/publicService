@@ -27,42 +27,92 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="page">
-    <h2>Мои услуги</h2>
+  <div class="page container py-4">
+    <h2 class="text-green-dark mb-4">Мои услуги</h2>
 
-    <div v-if="error" class="error">{{ error }}</div>
-    <div v-if="loading">Загрузка...</div>
+    <div v-if="error" class="alert alert-danger">{{ error }}</div>
+    <div v-if="loading" class="text-muted">Загрузка...</div>
 
-    <table v-else class="contracts">
-      <thead>
-        <tr>
-          <th>Номер контракта</th>
-          <th>Услуга</th>
-          <th>Провайдер</th>
-          <th>Адрес</th>
-          <th>Срок действия</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="c in contracts" :key="c.contractID">
-          <td>{{ c.contractNumber }}</td>
-          <td>{{ c.serviceName }}</td>
-          <td>{{ c.providerName }}</td>
-          <td>{{ c.address }}</td>
-          <td>
-            {{ new Date(c.contractStartDate).toLocaleDateString('ru-RU') }} –
-            {{ c.contractEndDate ? new Date(c.contractEndDate).toLocaleDateString('ru-RU') : '—' }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div v-else class="card shadow-sm">
+      <div class="card-body">
+        <table class="contracts table table-bordered table-striped table-hover align-middle mb-0">
+          <thead class="table-header">
+            <tr>
+              <th>Номер контракта</th>
+              <th>Услуга</th>
+              <th>Провайдер</th>
+              <th>Адрес</th>
+              <th>Срок действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="c in contracts" :key="c.contractID">
+              <td>{{ c.contractNumber }}</td>
+              <td>{{ c.serviceName }}</td>
+              <td>{{ c.providerName }}</td>
+              <td>{{ c.address }}</td>
+              <td>
+                {{ new Date(c.contractStartDate).toLocaleDateString('ru-RU') }} –
+                {{ c.contractEndDate ? new Date(c.contractEndDate).toLocaleDateString('ru-RU') : '—' }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.page { padding: 20px; }
-.error { color: red; margin-bottom: 10px; }
-.contracts { width: 100%; border-collapse: collapse; }
-.contracts th, .contracts td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-.contracts th { background-color: #f4f4f4; }
+:root {
+  --color-mint: #E6F4EC;
+  --color-green-light: #A3D9A5;
+  --color-green-deep: #4B8F6B;
+  --color-green-dark: #2F5D3A;
+  --color-yellow-green: #C4D96F;
+}
+
+.page {
+  background-color: var(--color-mint);
+  min-height: 100vh;
+  font-family: 'Inter', 'Roboto', sans-serif;
+}
+
+.text-green-dark {
+  color: var(--color-green-dark);
+}
+
+/* таблица */
+.contracts {
+  border: 2px solid var(--color-green-deep);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+/* шапка таблицы */
+.table-header {
+  background-color: var(--color-green-light);
+  color: var(--color-green-dark);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* строки */
+.contracts tbody tr:nth-child(even) {
+  background-color: var(--color-mint);
+}
+
+.contracts tbody tr:hover {
+  background-color: var(--color-yellow-green);
+  color: var(--color-green-dark);
+  transition: 0.3s ease;
+}
+
+/* ячейки */
+.contracts th, .contracts td {
+  text-align: center;
+  padding: 12px;
+  border: 1px solid var(--color-green-light);
+}
 </style>

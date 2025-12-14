@@ -62,6 +62,30 @@ namespace Backend.Controllers
 
             return Ok(invoice);
         }
+        [HttpGet("history/{userId}")]
+        public async Task<IActionResult> GetPaymentHistoryByUser(int userId)
+        {
+            var invoices = await _context.Invoices
+                .Include(i => i.Contract)
+                .ThenInclude(c => c.User)
+                .Where(i => i.IsPaid && i.Contract.UserID == userId)
+                .Select(i => new
+                {
+                    i.InvoiceID,
+                    i.TotalAmount,
+                    i.PaymentDate,
+                    ContractNumber = i.Contract.ContractNumber,
+                    UserEmail = i.Contract.User.Email
+                })
+                .ToListAsync();
+
+            if (!invoices.Any())
+                return NotFound();
+
+            return Ok(invoices);
+        }
+
+
 
         // POST: api/Invoices/{id}/pay
         /*[HttpPost("{id}/pay")]
