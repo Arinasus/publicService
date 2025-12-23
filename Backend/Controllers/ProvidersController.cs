@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Backend.Data;
 using Backend.Models;
+using Backend.DTOs;
 
 namespace Backend.Controllers
 {
@@ -17,34 +18,73 @@ namespace Backend.Controllers
         }
 
         // GET: api/Providers
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Provider>>> GetProviders()
-        {
-            return await _context.Providers.ToListAsync();
+        [HttpGet] 
+        public async Task<ActionResult<IEnumerable<ProviderDto>>> GetProviders() 
+        { 
+            var providers = await _context.Providers
+                .Include(p => p.Services)
+                .Select(p => new ProviderDto { 
+                    ProviderID = p.ProviderID, 
+                    ProviderName = p.ProviderName, 
+                    ContactPerson = p.ContactPerson, 
+                    PhoneNumber = p.PhoneNumber, 
+                    Email = p.Email, 
+                    IBAN = p.IBAN, 
+                    BIC = p.BIC, 
+                    UNP = p.UNP, 
+                    Services = p.Services.Select(s => new ServiceDto { 
+                        ServiceID = s.ServiceID, 
+                        ServiceName = s.ServiceName, 
+                        UnitOfMeasure = s.UnitOfMeasure, 
+                        Price = s.Price })
+                    .ToList() })
+                .ToListAsync(); 
+            return providers; 
         }
 
         // GET: api/Providers/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Provider>> GetProvider(int id)
-        {
-            var provider = await _context.Providers.FindAsync(id);
-
-            if (provider == null)
-            {
+        [HttpGet("{id}")] public async Task<ActionResult<ProviderDto>> GetProvider(int id) { 
+            var provider = await _context.Providers
+                .Include(p => p.Services)
+                .Where(p => p.ProviderID == id)
+                .Select(p => new ProviderDto 
+                { 
+                    ProviderID = p.ProviderID, 
+                    ProviderName = p.ProviderName, 
+                    ContactPerson = p.ContactPerson, 
+                    PhoneNumber = p.PhoneNumber, 
+                    Email = p.Email, 
+                    IBAN = p.IBAN, BIC = p.BIC, UNP = p.UNP,
+                    Services = p.Services
+                    .Select(s => new ServiceDto 
+                    { 
+                        ServiceID = s.ServiceID, 
+                        ServiceName = s.ServiceName, 
+                        UnitOfMeasure = s.UnitOfMeasure, Price = s.Price })
+                    .ToList() 
+                })
+                .FirstOrDefaultAsync(); 
+            if (provider == null) { 
                 return NotFound();
-            }
-
-            return provider;
+            } return provider; 
         }
 
         // POST: api/Providers
-        [HttpPost]
-        public async Task<ActionResult<Provider>> PostProvider(Provider provider)
-        {
-            _context.Providers.Add(provider);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetProvider), new { id = provider.ProviderID }, provider);
+        [HttpPost] public async Task<ActionResult<ProviderDto>> PostProvider(Provider provider) 
+        { 
+            _context.Providers.Add(provider); await _context.SaveChangesAsync(); 
+            return CreatedAtAction(nameof(GetProvider), 
+                new { id = provider.ProviderID }, 
+                new ProviderDto { ProviderID = provider.ProviderID, 
+                    ProviderName = provider.ProviderName, 
+                    ContactPerson = provider.ContactPerson, 
+                    PhoneNumber = provider.PhoneNumber, 
+                    Email = provider.Email, 
+                    IBAN = provider.IBAN, 
+                    BIC = provider.BIC, 
+                    UNP = provider.UNP, 
+                    Services = new List<ServiceDto>() 
+                });
         }
 
         // PUT: api/Providers/5
