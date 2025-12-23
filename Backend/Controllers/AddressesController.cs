@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Backend.Data;
 using Backend.Models;
+using Backend.DTOs;
 
 namespace Backend.Controllers
 {
@@ -18,29 +19,42 @@ namespace Backend.Controllers
 
         // GET: api/Addresses
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Address>>> GetAddresses()
+        public async Task<ActionResult<IEnumerable<AddressDto>>> GetAddresses()
         {
-            return await _context.Addresses
-                .Include(a => a.UserAddresses)
-                    .ThenInclude(ua => ua.User)
+            var addresses = await _context.Addresses
+                .Select(a => new AddressDto
+                {
+                    AddressID = a.AddressID,
+                    Street = a.Street,
+                    City = a.City,
+                    PostalCode = a.PostalCode
+                })
                 .ToListAsync();
+
+            return Ok(addresses);
         }
 
         // GET: api/Addresses/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Address>> GetAddress(int id)
+        public async Task<ActionResult<AddressDto>> GetAddress(int id)
         {
             var address = await _context.Addresses
-                .Include(a => a.UserAddresses)
-                    .ThenInclude(ua => ua.User)
-                .FirstOrDefaultAsync(a => a.AddressID == id);
+                .Where(a => a.AddressID == id)
+                .Select(a => new AddressDto
+                {
+                    AddressID = a.AddressID,
+                    Street = a.Street,
+                    City = a.City,
+                    PostalCode = a.PostalCode
+                })
+                .FirstOrDefaultAsync();
 
             if (address == null)
             {
                 return NotFound();
             }
 
-            return address;
+            return Ok(address);
         }
 
         // POST: api/Addresses

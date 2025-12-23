@@ -3,6 +3,7 @@ using System;
 using Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend.Migrations
 {
     [DbContext(typeof(UtilitiesDbContext))]
-    partial class UtilitiesDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251223192550_AddCardsTable")]
+    partial class AddCardsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -269,9 +272,6 @@ namespace Backend.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PaymentID"));
 
-                    b.Property<int?>("CardID")
-                        .HasColumnType("integer");
-
                     b.Property<int>("InvoiceID")
                         .HasColumnType("integer");
 
@@ -287,8 +287,6 @@ namespace Backend.Migrations
                         .HasColumnType("character varying(30)");
 
                     b.HasKey("PaymentID");
-
-                    b.HasIndex("CardID");
 
                     b.HasIndex("InvoiceID");
 
@@ -516,17 +514,11 @@ namespace Backend.Migrations
 
             modelBuilder.Entity("Backend.Models.Payment", b =>
                 {
-                    b.HasOne("Backend.Models.Card", "Card")
-                        .WithMany()
-                        .HasForeignKey("CardID");
-
                     b.HasOne("Backend.Models.Invoice", "Invoice")
                         .WithMany()
                         .HasForeignKey("InvoiceID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Card");
 
                     b.Navigation("Invoice");
                 });

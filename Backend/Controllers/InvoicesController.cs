@@ -24,20 +24,21 @@ namespace Backend.Controllers
         {
             var invoices = await _context.Invoices
                 .Include(i => i.Contract)
-                .Select(i => new InvoiceDto
-                {
-                    InvoiceID = i.InvoiceID,
-                    InvoiceDate = i.InvoiceDate,
-                    DueDate = i.DueDate,
-                    TotalAmount = i.TotalAmount,
-                    IsPaid = i.IsPaid,
-                    ContractNumber = i.Contract.ContractNumber
-                })
+                .Select(i => new InvoiceDto 
+                { 
+                    InvoiceID = i.InvoiceID, 
+                    IssueDate = i.IssueDate, 
+                    DueDate = i.DueDate, 
+                    Period = i.Period, 
+                    TotalAmount = i.TotalAmount, 
+                    IsPaid = i.IsPaid, 
+                    PaymentDate = i.PaymentDate, 
+                    ContractNumber = i.Contract.ContractNumber })
                 .ToListAsync();
 
             return Ok(invoices);
         }
-        // GET: api/Invoices/5
+        // GET: api/Invoices/id
         [HttpGet("{id}")]
         public async Task<ActionResult<InvoiceDto>> GetInvoice(int id)
         {
@@ -47,10 +48,12 @@ namespace Backend.Controllers
                 .Select(i => new InvoiceDto
                 {
                     InvoiceID = i.InvoiceID,
-                    InvoiceDate = i.InvoiceDate,
+                    IssueDate = i.IssueDate,
                     DueDate = i.DueDate,
+                    Period = i.Period,
                     TotalAmount = i.TotalAmount,
                     IsPaid = i.IsPaid,
+                    PaymentDate = i.PaymentDate,
                     ContractNumber = i.Contract.ContractNumber
                 })
                 .FirstOrDefaultAsync();
@@ -86,35 +89,12 @@ namespace Backend.Controllers
         }
 
 
-
-        // POST: api/Invoices/{id}/pay
-        /*[HttpPost("{id}/pay")]
-        public async Task<IActionResult> PayInvoice(int id)
-        {
-            var invoice = await _context.Invoices.FindAsync(id);
-            if (invoice == null)
-            {
-                return NotFound();
-            }
-
-            if (invoice.IsPaid)
-            {
-                return BadRequest("Invoice already paid");
-            }
-
-            invoice.IsPaid = true;
-            invoice.PaymentDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Invoice paid successfully" });
-        }*/
         [HttpPost("{id}/pay")]
         public async Task<IActionResult> PayInvoice(int id, [FromBody] PaymentDto dto)
         {
             var invoice = await _context.Invoices
                 .Include(i => i.Contract)
-                .ThenInclude(c => c.User) // если у тебя есть связь с пользователем
+                .ThenInclude(c => c.User) 
                 .FirstOrDefaultAsync(i => i.InvoiceID == id);
 
             if (invoice == null)
@@ -133,7 +113,7 @@ namespace Backend.Controllers
                 StoreName = "Utilities Service",
                 Date = DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm"),
                 Customer = invoice.Contract?.User != null  ? invoice.Contract.User.FirstName  : "Unknown",
-                InvoiceNumber = invoice.InvoiceID,
+                InvoiceNumber = invoice.Contract.ContractNumber,
                 Amount = invoice.TotalAmount,
                 Method = dto.PaymentMethod
             };
@@ -156,14 +136,14 @@ namespace Backend.Controllers
                 return BadRequest("Contract not found");
             }
 
-            var invoice = new Invoice
-            {
-                InvoiceDate = DateTime.SpecifyKind(dto.InvoiceDate, DateTimeKind.Utc),
-                DueDate = DateTime.SpecifyKind(dto.DueDate, DateTimeKind.Utc),
-                TotalAmount = dto.TotalAmount,
-                IsPaid = dto.IsPaid,
-                ContractID = contract.ContractID,
-                PaymentDate = dto.IsPaid ? DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc) : null
+            var invoice = new Invoice { 
+                IssueDate = DateTime.SpecifyKind(dto.IssueDate, DateTimeKind.Utc), 
+                DueDate = DateTime.SpecifyKind(dto.DueDate, DateTimeKind.Utc), 
+                Period = dto.Period, 
+                TotalAmount = dto.TotalAmount, 
+                IsPaid = dto.IsPaid, 
+                ContractID = contract.ContractID, 
+                PaymentDate = dto.IsPaid ? DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc) : null 
             };
 
             _context.Invoices.Add(invoice);
@@ -174,7 +154,7 @@ namespace Backend.Controllers
         }
 
 
-        // PUT: api/Invoices/5
+        // PUT: api/Invoices/id
         [HttpPut("{id}")]
         public async Task<IActionResult> PutInvoice(int id, InvoiceDto dto)
         {
@@ -184,10 +164,12 @@ namespace Backend.Controllers
                 return NotFound();
             }
 
-            invoice.InvoiceDate = DateTime.SpecifyKind(dto.InvoiceDate, DateTimeKind.Utc);
-            invoice.DueDate = DateTime.SpecifyKind(dto.DueDate, DateTimeKind.Utc);
-            invoice.TotalAmount = dto.TotalAmount;
-            invoice.IsPaid = dto.IsPaid;
+            invoice.IssueDate = DateTime.SpecifyKind(dto.IssueDate, DateTimeKind.Utc); 
+            invoice.DueDate = DateTime.SpecifyKind(dto.DueDate, DateTimeKind.Utc); 
+            invoice.Period = dto.Period; 
+            invoice.TotalAmount = dto.TotalAmount; 
+            invoice.IsPaid = dto.IsPaid; 
+            invoice.PaymentDate = dto.IsPaid ? DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc) : null;
 
             await _context.SaveChangesAsync();
             return NoContent();

@@ -10,3 +10,5 @@ const me = ref({ firstName: 'Арина', lastName: 'Сельвич', email: 'Ar
     <p>{{ me.email }}</p>
   </div>
 </template>
+<!-- docker compose exec postgres psql -U util_user -d utilities
+-->

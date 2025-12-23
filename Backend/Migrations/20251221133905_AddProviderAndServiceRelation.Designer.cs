@@ -3,6 +3,7 @@ using System;
 using Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend.Migrations
 {
     [DbContext(typeof(UtilitiesDbContext))]
-    partial class UtilitiesDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251221133905_AddProviderAndServiceRelation")]
+    partial class AddProviderAndServiceRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -76,43 +79,6 @@ namespace Backend.Migrations
                     b.ToTable("AuthTokens", "public");
                 });
 
-            modelBuilder.Entity("Backend.Models.Card", b =>
-                {
-                    b.Property<int>("CardID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CardID"));
-
-                    b.Property<string>("CVV")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("character varying(3)");
-
-                    b.Property<string>("CardHolderName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("CardNumber")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
-
-                    b.Property<string>("ExpiryDate")
-                        .IsRequired()
-                        .HasMaxLength(5)
-                        .HasColumnType("character varying(5)");
-
-                    b.Property<int>("UserID")
-                        .HasColumnType("integer");
-
-                    b.HasKey("CardID");
-
-                    b.HasIndex("UserID");
-
-                    b.ToTable("Cards", "public");
-                });
-
             modelBuilder.Entity("Backend.Models.Contract", b =>
                 {
                     b.Property<int>("ContractID")
@@ -171,19 +137,14 @@ namespace Backend.Migrations
                     b.Property<DateTime>("DueDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime>("InvoiceDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsPaid")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTime>("IssueDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<DateTime?>("PaymentDate")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Period")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .HasColumnType("character varying(7)");
 
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("numeric");
@@ -269,9 +230,6 @@ namespace Backend.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PaymentID"));
 
-                    b.Property<int?>("CardID")
-                        .HasColumnType("integer");
-
                     b.Property<int>("InvoiceID")
                         .HasColumnType("integer");
 
@@ -287,8 +245,6 @@ namespace Backend.Migrations
                         .HasColumnType("character varying(30)");
 
                     b.HasKey("PaymentID");
-
-                    b.HasIndex("CardID");
 
                     b.HasIndex("InvoiceID");
 
@@ -429,17 +385,6 @@ namespace Backend.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Backend.Models.Card", b =>
-                {
-                    b.HasOne("Backend.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Backend.Models.Contract", b =>
                 {
                     b.HasOne("Backend.Models.Address", "Address")
@@ -516,17 +461,11 @@ namespace Backend.Migrations
 
             modelBuilder.Entity("Backend.Models.Payment", b =>
                 {
-                    b.HasOne("Backend.Models.Card", "Card")
-                        .WithMany()
-                        .HasForeignKey("CardID");
-
                     b.HasOne("Backend.Models.Invoice", "Invoice")
                         .WithMany()
                         .HasForeignKey("InvoiceID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Card");
 
                     b.Navigation("Invoice");
                 });

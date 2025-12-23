@@ -12,13 +12,14 @@ type Service = {
 const services = ref<Service[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
-// форма для новой услуги
+
 const newService = ref<Service>({
   serviceID: 0,
   serviceName: '',
   unitOfMeasure: '',
   price: 0
 })
+
 async function loadServices() {
   try {
     const res = await fetch(import.meta.env.VITE_API_URL + '/Services')
@@ -30,6 +31,7 @@ async function loadServices() {
     loading.value = false
   }
 }
+
 async function addService() {
   try {
     const res = await fetch(import.meta.env.VITE_API_URL + '/Services', {
@@ -49,6 +51,7 @@ async function addService() {
     error.value = err.message
   }
 }
+
 async function updateService(service: Service) {
   await fetch(import.meta.env.VITE_API_URL + `/Services/${service.serviceID}`, {
     method: 'PUT',
@@ -68,25 +71,37 @@ onMounted(loadServices)
 </script>
 
 <template>
-  <div class="page">
-    <h2>Управление услугами</h2>
+  <div class="page container py-4">
+    <h2 class="text-green-dark mb-4">Управление услугами</h2>
 
-    <div v-if="error" class="error">{{ error }}</div>
-    <div v-else-if="loading">Загрузка...</div>
+    <div v-if="error" class="alert alert-danger">{{ error }}</div>
+    <div v-else-if="loading" class="text-muted">Загрузка...</div>
     <div v-else>
       <!-- форма добавления -->
-      <form @submit.prevent="addService" class="add-form">
-        <input v-model="newService.serviceName" placeholder="Название" required />
-        <input v-model="newService.unitOfMeasure" placeholder="Единица измерения" required />
-        <input v-model.number="newService.price" type="number" placeholder="Цена" required />
-        <button type="submit">Добавить услугу</button>
+      <form @submit.prevent="addService" class="row g-2 mb-4">
+        <div class="col-md-3">
+          <input v-model="newService.serviceName" class="form-control" placeholder="Название" required />
+        </div>
+        <div class="col-md-3">
+          <input v-model="newService.unitOfMeasure" class="form-control" placeholder="Единица измерения" required />
+        </div>
+        <div class="col-md-3">
+          <input v-model.number="newService.price" type="number" class="form-control" placeholder="Цена" required />
+        </div>
+        <div class="col-md-3">
+          <button type="submit" class="btn btn-success w-100">Добавить услугу</button>
+        </div>
       </form>
 
       <!-- таблица -->
-      <table>
-        <thead>
+      <table class="contracts table table-bordered table-hover align-middle">
+        <thead class="table-header">
           <tr>
-            <th>ID</th><th>Название</th><th>Ед. изм.</th><th>Цена</th><th>Действия</th>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Ед. изм.</th>
+            <th>Цена</th>
+            <th>Действия</th>
           </tr>
         </thead>
         <tbody>
@@ -94,20 +109,22 @@ onMounted(loadServices)
             <td>{{ s.serviceID }}</td>
             <td>
               <span v-if="!s.editing">{{ s.serviceName }}</span>
-              <input v-else v-model="s.serviceName" />
+              <input v-else v-model="s.serviceName" class="form-control" />
             </td>
             <td>
               <span v-if="!s.editing">{{ s.unitOfMeasure }}</span>
-              <input v-else v-model="s.unitOfMeasure" />
+              <input v-else v-model="s.unitOfMeasure" class="form-control" />
             </td>
             <td>
               <span v-if="!s.editing">{{ s.price }} ₽</span>
-              <input v-else type="number" v-model.number="s.price" />
+              <input v-else type="number" v-model.number="s.price" class="form-control" />
             </td>
             <td>
-              <button v-if="!s.editing" @click="s.editing = true">Редактировать</button>
-              <button v-else @click="updateService(s)">Сохранить</button>
-              <button @click="deleteService(s.serviceID)">Удалить</button>
+              <div class="d-flex gap-2">
+                <button v-if="!s.editing" @click="s.editing = true" class="btn btn-warning btn-sm">Редактировать</button>
+                <button v-else @click="updateService(s)" class="btn btn-success btn-sm">Сохранить</button>
+                <button @click="deleteService(s.serviceID)" class="btn btn-danger btn-sm">Удалить</button>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -117,13 +134,57 @@ onMounted(loadServices)
 </template>
 
 <style scoped>
-.page { padding: 20px; }
-.error { color: red; margin-bottom: 10px; }
-.add-form { margin-bottom: 20px; display: flex; gap: 10px; }
-.add-form input { padding: 5px; }
-table { width: 100%; border-collapse: collapse; }
-th, td { border: 1px solid #ddd; padding: 8px; }
-th { background: #f5f5f5; }
-input { width: 100%; border: none; background: #fafafa; padding: 4px; }
-button { padding: 5px 10px; cursor: pointer; }
+:root {
+  --color-lemon: #FFFACD;
+  --color-green-light: #A3D9A5;
+  --color-green-deep: #4B8F6B;
+  --color-green-dark: #2F5D3A;
+  --color-yellow-green: #C4D96F;
+}
+
+.page {
+  background-color: var(--color-lemon);
+  min-height: 100vh;
+  font-family: 'Inter', 'Roboto', sans-serif;
+}
+
+.text-green-dark {
+  color: var(--color-green-dark);
+}
+
+.contracts {
+  border: 2px solid var(--color-green-deep);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--color-lemon);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.table-header {
+  background-color: var(--color-green-light);
+  color: var(--color-green-dark);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.contracts th,
+.contracts td {
+  text-align: center;
+  padding: 12px;
+  border: 1px solid var(--color-green-deep);
+}
+
+.contracts tbody tr:nth-child(even) {
+  background-color: #fff;
+}
+
+.contracts tbody tr:nth-child(odd) {
+  background-color: var(--color-lemon);
+}
+
+.contracts tbody tr:hover {
+  background-color: var(--color-yellow-green);
+  color: var(--color-green-dark);
+  transition: 0.3s ease;
+}
 </style>

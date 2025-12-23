@@ -34,7 +34,11 @@ public class AuthController : ControllerBase
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Регистрация успешна" });
+        var token = Guid.NewGuid().ToString();
+        _context.AuthTokens.Add(new AuthToken { Token = token, UserID = user.UserID });
+        await _context.SaveChangesAsync();
+
+        return Ok(new { token, role = user.Role });
     }
 
     [HttpPost("login")]

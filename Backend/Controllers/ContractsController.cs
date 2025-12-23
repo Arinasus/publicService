@@ -5,6 +5,7 @@ using Backend.Models;
 using Backend.DTOs;
 using AutoMapper;
 using Backend.Profiles;
+using Backend.Services;
 
 namespace Backend.Controllers
 {
@@ -52,27 +53,30 @@ namespace Backend.Controllers
             return _mapper.Map<ContractDto>(contract);
         }
 
-        // POST: api/Contracts
         [HttpPost]
-        public async Task<IActionResult> CreateContract([FromBody] ContractCreateDto contractDto)
+        public async Task<IActionResult> CreateContract([FromBody] ContractCreateDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var user = await AuthHelpers.GetUserByBearerTokenAsync(_context, Request);
+            if (user == null) return Unauthorized("Нет или неверный токен");
 
-            var contract = _mapper.Map<Contract>(contractDto);
+            var contract = new Contract
+            {
+                ContractNumber = dto.ContractNumber,
+                ContractStartDate = dto.ContractStartDate,
+                ContractEndDate = dto.ContractEndDate,
+                UserID = user.UserID,          // берём из токена
+                AddressID = dto.AddressID,     // берём из выбранного адреса
+                ServiceID = dto.ServiceID,
+                ProviderID = dto.ProviderID
+            };
+
             _context.Contracts.Add(contract);
             await _context.SaveChangesAsync();
 
-            // Для возврата созданного контракта получаем его с включенными связанными данными
-            var createdContract = await _context.Contracts
-                .Include(c => c.User)
-                .Include(c => c.Address)
-                .Include(c => c.Service)
-                .Include(c => c.Provider)
-                .FirstOrDefaultAsync(c => c.ContractID == contract.ContractID);
-
-            return CreatedAtAction(nameof(GetContract), new { id = contract.ContractID }, _mapper.Map<ContractDto>(createdContract));
+            return Ok(contract);
         }
+
+
 
         // PUT: api/Contracts/5
         // PUT: api/Contracts/5

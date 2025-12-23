@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 namespace Backend.Models
 {
     public class Provider
@@ -17,5 +18,7 @@ namespace Backend.Models
 
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
+        [JsonIgnore]
+        public ICollection<Service> Services { get; set; } = new List<Service>();
     }
 }

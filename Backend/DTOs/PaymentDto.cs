@@ -8,5 +8,7 @@
         public string PaymentMethod { get; set; } = string.Empty;
 
         public int InvoiceID { get; set; }
+        public string ContractNumber { get; set; } = string.Empty; 
+        public string CardNumber { get; set; } = string.Empty;
     }
 }

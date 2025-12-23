@@ -20,7 +20,7 @@ namespace Backend.Models
         [Required, MinLength(6)]
         public string PasswordHash { get; set; } = string.Empty;
         [Required]
-        public string Role { get; set; } = "user"; // "user" или "admin"
+        public string Role { get; set; } = "user";
         public ICollection<UserAddress> UserAddresses { get; set; } = new List<UserAddress>();
     }
 }

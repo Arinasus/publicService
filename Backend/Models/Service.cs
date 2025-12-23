@@ -13,5 +13,8 @@ namespace Backend.Models
         public string UnitOfMeasure { get; set; } = string.Empty;
         [Range(0, 100000)]
         public decimal Price { get; set; }
+        [Required]
+        public int ProviderID { get; set; }
+        public Provider? Provider { get; set; }
     }
 }

@@ -66,27 +66,6 @@
                 <div class="form-text">Минимум 6 символов</div>
               </div>
 
-              <!-- Выбор роли -->
-              <div class="mb-4">
-                <label for="role" class="form-label fw-medium text-dark-emphasis">
-                  <i class="bi bi-person-badge me-2"></i>Роль
-                </label>
-                <div class="input-group">
-                  <span class="input-group-text bg-transparent border-end-0">
-                    <i class="bi bi-people text-muted"></i>
-                  </span>
-                  <select 
-                    v-model="role"
-                    id="role"
-                    class="form-select form-select-lg border-start-0 ps-0"
-                  >
-                    <option value="user">👤 Пользователь</option>
-                    <option value="admin">⚙️ Администратор</option>
-                  </select>
-                </div>
-                <div class="form-text">Выберите тип учетной записи</div>
-              </div>
-
               <!-- Кнопка входа -->
               <div class="d-grid mb-4">
                 <button 
@@ -130,26 +109,33 @@ const router = useRouter()
 const route = useRoute()
 const email = ref('')
 const password = ref('')
-const role = ref<'admin'|'user'>('user')
 
-async function login() {
+
+async function login(event: SubmitEvent) {
+  event.preventDefault()
   const res = await fetch(import.meta.env.VITE_API_URL + '/Auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: email.value, password: password.value })
   })
+  if (!res.ok) throw new Error('Ошибка авторизации')
+  const auth = await res.json()
+  localStorage.setItem('token', auth.token)
+  localStorage.setItem('role', auth.role)
 
-  if (!res.ok) {
-    alert('Ошибка входа')
-    return
-  }
+  // загружаем профиль
+  const me = await fetch(import.meta.env.VITE_API_URL + '/Users/me', {
+    headers: { 'Authorization': 'Bearer ' + auth.token }
+  })
+  if (!me.ok) throw new Error('Не удалось загрузить профиль')
+  const profile = await me.json()
+  localStorage.setItem('profile', JSON.stringify(profile))
 
-  const data = await res.json()
-  localStorage.setItem('auth', JSON.stringify(data))
-
-  const redirect = (route.query.redirect as string) ?? (data.role === 'admin' ? '/admin' : '/')
+  const redirect = (route.query.redirect as string) ?? (auth.role === 'admin' ? '/admin' : '/')
   router.push(redirect)
 }
+
+
 </script>
 
 <style scoped>

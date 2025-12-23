@@ -4,7 +4,9 @@ type User = {
   userID: number
   email: string
   firstName: string
-  lastName: string}
+  lastName: string
+  role: 'admin' | 'user'
+}
 const users = ref<User[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -41,6 +43,24 @@ async function deleteUser(user: User) {
     alert(`Ошибка удаления: ${err.message}`)
   }
 }
+async function changeRole(user: User, role: 'admin'|'user') {
+  try {
+    const res = await fetch(
+      import.meta.env.VITE_API_URL + `/Users/${user.userID}/role`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role })
+      }
+    )
+    if (!res.ok) throw new Error(`Ошибка изменения роли: ${res.status}`)
+    // обновляем локально
+    user.role = role
+  } catch (err: any) {
+    alert(`Ошибка: ${err.message}`)
+  }
+}
+
 </script>
 
 <template>
@@ -57,6 +77,7 @@ async function deleteUser(user: User) {
           <th>Email</th>
           <th>Имя</th>
           <th>Фамилия</th>
+          <th>Роль</th>
           <th>Действие</th>
         </tr>
       </thead>
@@ -66,9 +87,14 @@ async function deleteUser(user: User) {
           <td>{{ u.email }}</td>
           <td>{{ u.firstName }}</td>
           <td>{{ u.lastName }}</td>
+          <td>{{ u.role === 'admin' ? '⚙️ Администратор' : '👤 Пользователь' }}</td>
           <td>
-            <button @click="deleteUser(u)">Удалить</button>
-          </td>
+  <button class="btn-delete" @click="deleteUser(u)">Удалить</button>
+<button class="btn-admin" @click="changeRole(u, 'admin')">Назначить админом</button>
+<button class="btn-user" @click="changeRole(u, 'user')">Сделать пользователем</button>
+
+</td>
+
         </tr>
       </tbody>
     </table>
@@ -83,4 +109,8 @@ async function deleteUser(user: User) {
 .users th { background-color: #f4f4f4; }
 button { padding: 6px 12px; background-color: #d9534f; color: white; border: none; border-radius: 4px; cursor: pointer; }
 button:hover { background-color: #c9302c; }
+.btn-delete { background-color: #d9534f; }
+.btn-admin { background-color: #5bc0de; }
+.btn-user { background-color: #5cb85c; }
+
 </style>

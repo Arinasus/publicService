@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Backend.Data;
 using Backend.Models;
+using Backend.DTOs;
 
 namespace Backend.Controllers
 {
@@ -22,6 +23,8 @@ namespace Backend.Controllers
         {
             return await _context.Payments
                 .Include(p => p.Invoice)
+                .ThenInclude(i => i.Contract)
+                .Include(p => p.Card)
                 .ToListAsync();
         }
 
@@ -40,16 +43,48 @@ namespace Backend.Controllers
 
             return payment;
         }
+        [HttpGet("user/{userId}")]
+        public async Task<ActionResult<IEnumerable<PaymentDto>>> GetPaymentsByUser(int userId)
+        {
+            var payments = await _context.Payments
+                .Include(p => p.Invoice)
+                    .ThenInclude(i => i.Contract)
+                .Include(p => p.Card)
+                .Where(p => p.Invoice.Contract.UserID == userId)
+                .Select(p => new PaymentDto
+                {
+                    PaymentID = p.PaymentID,
+                    InvoiceID = p.InvoiceID,
+                    PaymentAmount = p.PaymentAmount,
+                    PaymentMethod = p.PaymentMethod,
+                    PaymentDate = p.PaymentDate,
+                    ContractNumber = p.Invoice.Contract.ContractNumber,
+                    CardNumber = p.Card != null ? p.Card.CardNumber : null
+                })
+                .ToListAsync();
+
+            return Ok(payments);
+        }
 
         // POST: api/Payments
         [HttpPost]
         public async Task<ActionResult<Payment>> PostPayment(Payment payment)
         {
+            var invoice = await _context.Invoices.FindAsync(payment.InvoiceID);
+            if (invoice == null) return BadRequest("Invoice not found");
+
+            if (payment.CardID.HasValue)
+            {
+                var card = await _context.Cards.FindAsync(payment.CardID.Value);
+                if (card == null) return BadRequest("Card not found");
+            }
+
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetPayment), new { id = payment.PaymentID }, payment);
         }
+
 
         // PUT: api/Payments/5
         [HttpPut("{id}")]

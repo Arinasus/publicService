@@ -224,11 +224,5 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.page { padding: 20px; }
 .error { color: red; margin-bottom: 10px; }
-.form { margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-th, td { border: 1px solid #ddd; padding: 8px; }
-th { background: #f5f5f5; }
-button { margin-right: 5px; }
 </style>

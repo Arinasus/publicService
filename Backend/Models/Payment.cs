@@ -19,5 +19,7 @@ namespace Backend.Models
         public string PaymentMethod { get; set; } = string.Empty;
 
         public Invoice? Invoice { get; set; }
+        public int? CardID { get; set; }
+        public Card? Card { get; set; }
     }
 }
