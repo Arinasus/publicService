@@ -3,6 +3,7 @@ using System;
 using Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend.Migrations
 {
     [DbContext(typeof(UtilitiesDbContext))]
-    partial class UtilitiesDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260108134401_FixContractServiceRelationship")]
+    partial class FixContractServiceRelationship
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -216,8 +219,7 @@ namespace Backend.Migrations
                     b.Property<decimal>("ReadingValue")
                         .HasColumnType("numeric");
 
-                    b.Property<int?>("ServiceID")
-                        .IsRequired()
+                    b.Property<int>("ServiceID")
                         .HasColumnType("integer");
 
                     b.Property<int?>("SubmittedByUserID")

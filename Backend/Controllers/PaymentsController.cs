@@ -57,7 +57,7 @@ namespace Backend.Controllers
                     InvoiceID = p.InvoiceID,
                     PaymentAmount = p.PaymentAmount,
                     PaymentMethod = p.PaymentMethod,
-                    PaymentDate = p.PaymentDate,
+                    PaymentDate = (DateTime)p.PaymentDate,
                     ContractNumber = p.Invoice.Contract.ContractNumber,
                     CardNumber = p.Card != null ? p.Card.CardNumber : null
                 })
@@ -65,25 +65,41 @@ namespace Backend.Controllers
 
             return Ok(payments);
         }
-
         // POST: api/Payments
         [HttpPost]
         public async Task<ActionResult<Payment>> PostPayment(Payment payment)
         {
-            var invoice = await _context.Invoices.FindAsync(payment.InvoiceID);
+            var invoice = await _context.Invoices
+                .Include(i => i.Contract)
+                .FirstOrDefaultAsync(i => i.InvoiceID == payment.InvoiceID);
+
             if (invoice == null) return BadRequest("Invoice not found");
+            if (invoice.IsPaid) return BadRequest("Invoice already paid");
 
             if (payment.CardID.HasValue)
             {
-                var card = await _context.Cards.FindAsync(payment.CardID.Value);
-                if (card == null) return BadRequest("Card not found");
+                var card = await _context.Cards
+                    .FirstOrDefaultAsync(c => c.CardID == payment.CardID.Value && c.UserID == invoice.Contract.UserID);
+
+                if (card == null) return BadRequest("Card not found or does not belong to user");
             }
 
+            // имитация списания средств
+            invoice.IsPaid = true;
+            invoice.PaymentDate = DateTime.UtcNow;
+
+            payment.PaymentDate = invoice.PaymentDate;
+            payment.PaymentAmount = invoice.TotalAmount;
+            payment.PaymentMethod = payment.CardID.HasValue ? "Card" : "Cash";
+
             _context.Payments.Add(payment);
+            _context.Entry(invoice).State = EntityState.Modified;
+
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetPayment), new { id = payment.PaymentID }, payment);
         }
+
 
 
         // PUT: api/Payments/5

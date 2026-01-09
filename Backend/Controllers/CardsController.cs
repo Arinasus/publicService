@@ -4,6 +4,7 @@ using Backend.Data;
 using Backend.Models;
 using Backend.DTOs;
 using System.Security.Claims;
+using Backend.Services;
 
 namespace Backend.Controllers
 {
@@ -18,14 +19,11 @@ namespace Backend.Controllers
         [HttpGet("me")]
         public async Task<ActionResult<IEnumerable<CardDTO>>> GetMyCards()
         {
-            // читаем userID из токена
-            var userIdClaim = User.FindFirst("userID")?.Value;
-            if (userIdClaim == null) return Unauthorized();
-
-            int userId = int.Parse(userIdClaim);
+            var user = await AuthHelpers.GetUserByBearerTokenAsync(_context, Request);
+            if (user == null) return Unauthorized("Нет или неверный токен");
 
             var cards = await _context.Cards
-                .Where(c => c.UserID == userId)
+                .Where(c => c.UserID == user.UserID)
                 .ToListAsync();
 
             var result = cards.Select(c => new CardDTO
@@ -39,6 +37,7 @@ namespace Backend.Controllers
 
             return Ok(result);
         }
+
 
         // GET: api/Cards/user/5
         [HttpGet("user/{userId}")]
@@ -72,14 +71,12 @@ namespace Backend.Controllers
         [HttpPost]
         public async Task<ActionResult<CardDTO>> PostCard(CardDTO dto)
         {
-            var userIdClaim = User.FindFirst("userID")?.Value;
-            if (userIdClaim == null) return Unauthorized();
-
-            int userId = int.Parse(userIdClaim);
+            var user = await AuthHelpers.GetUserByBearerTokenAsync(_context, Request);
+            if (user == null) return Unauthorized("Нет или неверный токен");
 
             var card = new Card
             {
-                UserID = userId,
+                UserID = user.UserID,
                 CardNumber = dto.CardNumber,
                 ExpiryDate = dto.ExpiryDate,
                 CardHolderName = dto.CardHolderName,
@@ -90,11 +87,12 @@ namespace Backend.Controllers
             await _context.SaveChangesAsync();
 
             dto.CardID = card.CardID;
-            dto.UserID = userId;
+            dto.UserID = user.UserID;
             dto.CardNumber = MaskCardNumber(dto.CardNumber);
 
             return CreatedAtAction(nameof(GetMyCards), new { }, dto);
         }
+
 
         // PUT: api/Cards/5
         [HttpPut("{id}")]

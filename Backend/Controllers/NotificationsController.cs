@@ -8,7 +8,7 @@ namespace Backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class NotificationsController : ControllerBase
+    public class NotificationsController : BaseController
     {
         private readonly UtilitiesDbContext _context;
 
@@ -58,6 +58,16 @@ namespace Backend.Controllers
                 IsRead = notification.IsRead,
                 UserEmail = notification.User != null ? notification.User.Email : string.Empty
             };
+        }
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMyNotifications()
+        {
+            var userId = GetUserIdFromToken();
+            var notifications = await _context.Notifications
+            .Where(n => n.UserID == userId)
+            .ToListAsync();
+
+        return Ok(notifications);
         }
 
         // POST: api/Notifications

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { apiFetch } from '../../services/apiFetch'
 
 type Contract = {
   contractID: number
@@ -8,43 +9,42 @@ type Contract = {
   contractEndDate: string
   userName: string
   address: string
-  serviceName: string
   providerName: string
-  serviceID?: number   // добавим связь с услугой
+  services: Array<{
+    serviceID: number
+    serviceName: string
+    unitOfMeasure: string
+    price: number
+  }>
 }
-// type ContractCreate = {
-//   userID: number
-//   addressID: number
-//   serviceID: number
-//   providerID: number
-//   contractNumber: string
-//   contractStartDate: string
-//   contractEndDate: string
-// }
+
 type Service = {
   serviceID: number
   serviceName: string
   unitOfMeasure: string
   price: number
-  providerID: number 
+  providerID: number
+  providerName: string
+  isAvailable?: boolean
 }
 
 const contracts = ref<Contract[]>([])
-const services = ref<Service[]>([])
+const availableServices = ref<Service[]>([]) // переименовали с services на availableServices
 const loading = ref(true)
 const error = ref<string | null>(null)
 
 onMounted(async () => {
   try {
     // контракты пользователя
-    const resContracts = await fetch(import.meta.env.VITE_API_URL + '/Contracts')
+    const resContracts = await apiFetch('/Contracts/me')
     if (!resContracts.ok) throw new Error(`Ошибка загрузки контрактов: ${resContracts.status}`)
     contracts.value = await resContracts.json()
 
-    // все доступные услуги
-    const resServices = await fetch(import.meta.env.VITE_API_URL + '/Services')
+    // ДОСТУПНЫЕ услуги (которые пользователь еще не подключил)
+    const resServices = await apiFetch('/Services/available') // ИЗМЕНИЛИ эндпоинт
     if (!resServices.ok) throw new Error(`Ошибка загрузки услуг: ${resServices.status}`)
-    services.value = await resServices.json()
+    availableServices.value = await resServices.json()
+    
   } catch (err: any) {
     error.value = err.message
   } finally {
@@ -52,25 +52,31 @@ onMounted(async () => {
   }
 })
 
+// Функция для проверки, подключена ли услуга
+function isServiceSubscribed(serviceID: number): boolean {
+  return contracts.value.some(contract => 
+    contract.services?.some(service => service.serviceID === serviceID)
+  )
+}
+
 async function addService(serviceID: number) {
-  const alreadySubscribed = contracts.value.some(c => c.serviceID === serviceID)
-  if (alreadySubscribed) {
+  if (isServiceSubscribed(serviceID)) {
     alert('Вы уже подписаны на эту услугу!')
     return
   }
 
-  const service = services.value.find(s => s.serviceID === serviceID)
+  const service = availableServices.value.find(s => s.serviceID === serviceID)
   if (!service) {
     alert('Услуга не найдена!')
     return
   }
 
-  const token = localStorage.getItem('token')
-  const profile = JSON.parse(localStorage.getItem('profile') || '{}')
-  if (!token || !profile.userID) {
-    alert('Вы не авторизованы!')
-    return
-  }
+  const resProfile = await apiFetch('/Users/me') 
+  if (!resProfile.ok) { 
+    alert('Ошибка получения профиля') 
+    return 
+  } 
+  const profile = await resProfile.json()
 
   const addressID = profile.addresses?.[0]?.addressID
   if (!addressID) {
@@ -79,32 +85,46 @@ async function addService(serviceID: number) {
   }
 
   const contractPayload = {
-    serviceID: service.serviceID,
     providerID: service.providerID,
     addressID: addressID,
     contractNumber: 'CNT-' + Date.now(),
     contractStartDate: new Date().toISOString(),
-    contractEndDate: new Date(Date.now() + 30*24*60*60*1000).toISOString()
+    contractEndDate: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
+    serviceIds: [service.serviceID]
   }
 
-  const res = await fetch(import.meta.env.VITE_API_URL + '/Contracts', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + token
-    },
-    body: JSON.stringify(contractPayload)
+  const res = await apiFetch('/Contracts', {
+    method: 'POST', 
+    headers: { 'Content-Type': 'application/json' }, 
+    body: JSON.stringify(contractPayload) 
   })
-  if (!res.ok) throw new Error(`Ошибка добавления: ${res.status}`)
+  
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Ошибка добавления: ${res.status} - ${errorText}`)
+  }
+  
+  // Обновляем списки после успешного добавления
   const newContract = await res.json()
   contracts.value.push(newContract)
+  
+  // Убираем добавленную услугу из списка доступных
+  availableServices.value = availableServices.value.filter(s => s.serviceID !== serviceID)
 }
 
-
-async function removeService(contractID: number) {
-  if (!confirm('Вы уверены, что хотите отказаться от услуги?')) return
-  await fetch(import.meta.env.VITE_API_URL + `/Contracts/${contractID}`, { method: 'DELETE' })
+async function removeService(contractID: number) { 
+  if (!confirm('Вы уверены, что хотите отказаться от услуги?')) return 
+  
+  await apiFetch(`/Contracts/${contractID}`, { method: 'DELETE' }) 
+  
+  // Обновляем список контрактов
   contracts.value = contracts.value.filter(c => c.contractID !== contractID)
+  
+  // Нужно перезагрузить доступные услуги
+  const resServices = await apiFetch('/Services/available')
+  if (resServices.ok) {
+    availableServices.value = await resServices.json()
+  }
 }
 </script>
 
@@ -122,7 +142,7 @@ async function removeService(contractID: number) {
           <thead class="table-header">
             <tr>
               <th>Номер контракта</th>
-              <th>Услуга</th>
+              <th>Услуги</th>
               <th>Провайдер</th>
               <th>Адрес</th>
               <th>Срок действия</th>
@@ -132,7 +152,17 @@ async function removeService(contractID: number) {
           <tbody>
             <tr v-for="c in contracts" :key="c.contractID">
               <td>{{ c.contractNumber }}</td>
-              <td>{{ c.serviceName }}</td>
+              <td>
+                <div v-if="c.services && c.services.length > 0">
+                  <div v-for="service in c.services.slice(0, 2)" :key="service.serviceID">
+                    {{ service.serviceName }}
+                  </div>
+                  <span v-if="c.services.length > 2" class="text-muted small">
+                    +{{ c.services.length - 2 }} еще
+                  </span>
+                </div>
+                <span v-else class="text-muted">Нет услуг</span>
+              </td>
               <td>{{ c.providerName }}</td>
               <td>{{ c.address }}</td>
               <td>
@@ -148,7 +178,7 @@ async function removeService(contractID: number) {
       </div>
     </div>
 
-    <!-- список доступных услуг -->
+    <!-- список ДОСТУПНЫХ услуг -->
     <h2 class="text-green-dark mb-4">Доступные услуги</h2>
     <div class="card shadow-sm">
       <div class="card-body">
@@ -158,28 +188,29 @@ async function removeService(contractID: number) {
               <th>Название</th>
               <th>Ед. изм.</th>
               <th>Цена</th>
+              <th>Провайдер</th>
               <th>Действие</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="s in services" :key="s.serviceID">
+            <tr v-for="s in availableServices" :key="s.serviceID">
               <td>{{ s.serviceName }}</td>
               <td>{{ s.unitOfMeasure }}</td>
               <td>{{ s.price }} ₽</td>
+              <td>{{ s.providerName }}</td>
               <td>
+                <!-- Кнопка всегда активна, так как это список доступных услуг -->
                 <button
-                  v-if="contracts.some(c => c.serviceID === s.serviceID)"
-                  class="btn btn-secondary btn-sm" disabled
-                >
-                  Уже подключена
-                </button>
-                <button
-                  v-else
                   @click="addService(s.serviceID)"
                   class="btn btn-success btn-sm"
                 >
                   Добавить
                 </button>
+              </td>
+            </tr>
+            <tr v-if="availableServices.length === 0">
+              <td colspan="5" class="text-center text-muted">
+                Все доступные услуги уже подключены
               </td>
             </tr>
           </tbody>

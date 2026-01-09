@@ -5,14 +5,16 @@
     <p>Адрес: {{ payer.address }}</p>
     <p>Дата выставления: {{ new Date(invoice.issueDate).toLocaleDateString('ru-RU') }}</p>
     <p>Период: {{ invoice.period }}</p>
-    <p>Сумма к оплате: {{ invoice.totalAmount.toFixed(2) }} BYN</p>
     <p v-if="invoice.isPaid" class="paid">✅ Счёт уже оплачен</p>
 
     <h4>Счётчики</h4>
     <ul>
-      <li v-for="m in meters" :key="m.name">
-        {{ m.name }}: предыдущий {{ m.previous }}, текущий {{ m.current }}
-      </li>
+<li v-for="m in meters" :key="m.name">
+  <label>{{ m.name }}</label>
+  <p>Предыдущее: {{ m.previous }}</p>
+  <input type="number" v-model.number="m.current" placeholder="Введите текущее значение" />
+</li>
+
     </ul>
 
     <div class="actions">
@@ -26,9 +28,10 @@
 defineProps<{
   payer: { name: string; address: string }
   invoice: { issueDate: string; period: string; totalAmount: number; isPaid: boolean }
-  meters: { name: string; previous: number; current: number }[]
+  meters: { name: string; previous: number; current: number; unit: string; price: number }[]
 }>()
 </script>
+
 
 <style scoped>
 .paid {

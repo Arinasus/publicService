@@ -9,7 +9,7 @@ namespace Backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class InvoicesController : ControllerBase
+    public class InvoicesController : BaseController
     {
         private readonly UtilitiesDbContext _context;
 
@@ -44,6 +44,7 @@ namespace Backend.Controllers
         {
             var invoice = await _context.Invoices
                 .Include(i => i.Contract)
+                .ThenInclude(c => c.Address)
                 .Where(i => i.InvoiceID == id)
                 .Select(i => new InvoiceDto
                 {
@@ -54,11 +55,13 @@ namespace Backend.Controllers
                     TotalAmount = i.TotalAmount,
                     IsPaid = i.IsPaid,
                     PaymentDate = i.PaymentDate,
-                    ContractNumber = i.Contract.ContractNumber
+                    ContractNumber = i.Contract.ContractNumber,
+                    AddressLine = $"{i.Contract.Address.City}, {i.Contract.Address.Street}, {i.Contract.Address.House}"
                 })
                 .FirstOrDefaultAsync();
 
             if (invoice == null)
+
             {
                 return NotFound();
             }
@@ -84,6 +87,27 @@ namespace Backend.Controllers
 
             if (!invoices.Any())
                 return NotFound();
+
+            return Ok(invoices);
+        }
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMyInvoices()
+        {
+            var userId = GetUserIdFromToken();
+
+            var invoices = await _context.Invoices
+                .Where(i => i.Contract != null && i.Contract.User != null && i.Contract.User.UserID == userId)
+                .Select(i => new {
+                    i.InvoiceID,
+                    i.ContractID,
+                    i.IssueDate,
+                    i.DueDate,
+                    i.Period,
+                    i.TotalAmount,
+                    i.IsPaid,
+                    i.PaymentDate
+                })
+                .ToListAsync();
 
             return Ok(invoices);
         }

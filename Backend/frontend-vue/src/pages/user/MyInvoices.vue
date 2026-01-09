@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { apiFetch } from '../../services/apiFetch'
 import PaymentWizard from './PaymentWizard.vue'
 
 type Invoice = {
@@ -21,9 +22,8 @@ const selectedInvoice = ref<Invoice | null>(null)
 
 onMounted(async () => {
   try {
-    const res = await fetch(import.meta.env.VITE_API_URL + '/Invoices', {
-      headers: { 'Content-Type': 'application/json' },
-    })
+    // ✅ заменили fetch на apiFetch
+    const res = await apiFetch('/Invoices')
     if (!res.ok) throw new Error(`Ошибка загрузки: ${res.status}`)
     invoices.value = await res.json()
   } catch (err: any) {

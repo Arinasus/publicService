@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, type RouteRecordRaw, type RouteLocationNormalized } from 'vue-router'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 
 type Role = 'admin' | 'user'
 type AuthState = { token: string; role: Role } | null
@@ -11,7 +11,7 @@ function getAuth(): AuthState {
 const routes: RouteRecordRaw[] = [
   { path: '/', name: 'home', component: () => import('../pages/Home.vue') },
   { path: '/login', name: 'login', component: () => import('../pages/Login.vue') },
-
+  { path: '/register', name: 'register', component: () => import('../pages/Register.vue') },
   // user
   {
     path: '/me',
@@ -79,7 +79,7 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to: RouteLocationNormalized) => {
+router.beforeEach((to) => {
   const auth = getAuth()
   const meta = to.meta
 
@@ -92,6 +92,8 @@ router.beforeEach((to: RouteLocationNormalized) => {
   if (meta.role && auth?.role && !meta.role.includes(auth.role)) {
     return { name: auth.role === 'admin' ? 'admin-dashboard' : 'home' }
   }
+
+  return true // ← разрешаем переход
 })
 
 export default router

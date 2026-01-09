@@ -3,6 +3,7 @@ using System;
 using Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend.Migrations
 {
     [DbContext(typeof(UtilitiesDbContext))]
-    partial class UtilitiesDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260107195146_AddServiceToMeterReading")]
+    partial class AddServiceToMeterReading
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -147,6 +150,9 @@ namespace Backend.Migrations
                     b.Property<int>("ProviderID")
                         .HasColumnType("integer");
 
+                    b.Property<int>("ServiceID")
+                        .HasColumnType("integer");
+
                     b.Property<int>("UserID")
                         .HasColumnType("integer");
 
@@ -216,8 +222,7 @@ namespace Backend.Migrations
                     b.Property<decimal>("ReadingValue")
                         .HasColumnType("numeric");
 
-                    b.Property<int?>("ServiceID")
-                        .IsRequired()
+                    b.Property<int>("ServiceID")
                         .HasColumnType("integer");
 
                     b.Property<int?>("SubmittedByUserID")
@@ -360,14 +365,13 @@ namespace Backend.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ServiceID"));
 
-                    b.Property<int?>("ContractID")
+                    b.Property<int>("ContractID")
                         .HasColumnType("integer");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
 
-                    b.Property<int?>("ProviderID")
-                        .IsRequired()
+                    b.Property<int>("ProviderID")
                         .HasColumnType("integer");
 
                     b.Property<string>("ServiceName")
@@ -567,7 +571,9 @@ namespace Backend.Migrations
                 {
                     b.HasOne("Backend.Models.Contract", "Contract")
                         .WithMany("Services")
-                        .HasForeignKey("ContractID");
+                        .HasForeignKey("ContractID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Backend.Models.Provider", "Provider")
                         .WithMany("Services")

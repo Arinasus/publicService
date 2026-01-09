@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { apiFetch } from '../../services/apiFetch'
 type User = { 
   userID: number
   email: string
@@ -13,9 +14,7 @@ const error = ref<string | null>(null)
 
 onMounted(async () => {
   try {
-  const res = await fetch(import.meta.env.VITE_API_URL + '/Users', {
-      headers: { 'Content-Type': 'application/json' },
-    })
+  const res = await apiFetch('/Users')
     if (!res.ok) {
       throw new Error(`Ошибка загрузки: ${res.status}`)
     }

@@ -28,11 +28,27 @@ namespace Backend.Controllers
             var contracts = await _context.Contracts
                .Include(c => c.User)
                .Include(c => c.Address)
-               .Include(c => c.Service)
+               .Include(c => c.Services)
                .Include(c => c.Provider)
                .ToListAsync();
             return _mapper.Map<List<ContractDto>>(contracts);
         }
+        [HttpGet("me")]
+public async Task<ActionResult<IEnumerable<ContractDto>>> GetMyContracts()
+{
+    var user = await AuthHelpers.GetUserByBearerTokenAsync(_context, Request);
+    if (user == null) return Unauthorized("Нет или неверный токен");
+
+    var contracts = await _context.Contracts
+        .Include(c => c.User)
+        .Include(c => c.Address)
+        .Include(c => c.Services)
+        .Include(c => c.Provider)
+        .Where(c => c.UserID == user.UserID)
+        .ToListAsync();
+
+    return _mapper.Map<List<ContractDto>>(contracts);
+}
 
         // GET: api/Contracts/5
         [HttpGet("{id}")]
@@ -41,7 +57,7 @@ namespace Backend.Controllers
             var contract = await _context.Contracts
                 .Include(c => c.User)
                 .Include(c => c.Address)
-                .Include(c => c.Service)
+                .Include(c => c.Services)
                 .Include(c => c.Provider)
                 .FirstOrDefaultAsync(c => c.ContractID == id);
 
@@ -56,29 +72,50 @@ namespace Backend.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateContract([FromBody] ContractCreateDto dto)
         {
+            // ИСПРАВЛЕНО: используем AuthHelpers вместо GetUserIdFromToken
             var user = await AuthHelpers.GetUserByBearerTokenAsync(_context, Request);
             if (user == null) return Unauthorized("Нет или неверный токен");
 
+            // Сначала создаем контракт без услуг
             var contract = new Contract
             {
                 ContractNumber = dto.ContractNumber,
                 ContractStartDate = dto.ContractStartDate,
                 ContractEndDate = dto.ContractEndDate,
-                UserID = user.UserID,          // берём из токена
-                AddressID = dto.AddressID,     // берём из выбранного адреса
-                ServiceID = dto.ServiceID,
+                UserID = user.UserID, // Используем user.UserID
+                AddressID = dto.AddressID,
                 ProviderID = dto.ProviderID
             };
 
+            // Сохраняем контракт, чтобы получить ContractID
             _context.Contracts.Add(contract);
             await _context.SaveChangesAsync();
 
-            return Ok(contract);
+            // Теперь привязываем услуги к созданному контракту
+            var services = await _context.Services
+                .Where(s => dto.ServiceIds.Contains(s.ServiceID))
+                .ToListAsync();
+            
+            foreach (var service in services)
+            {
+                service.ContractID = contract.ContractID;
+            }
+
+            // Сохраняем изменения в услугах
+            await _context.SaveChangesAsync();
+
+            // Загружаем контракт с услугами для ответа
+            var contractWithServices = await _context.Contracts
+                .Include(c => c.Services)
+                .Include(c => c.User)
+                .Include(c => c.Address)
+                .Include(c => c.Provider)
+                .FirstOrDefaultAsync(c => c.ContractID == contract.ContractID);
+
+            return Ok(_mapper.Map<ContractDto>(contractWithServices));
         }
 
 
-
-        // PUT: api/Contracts/5
         // PUT: api/Contracts/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutContract(int id, ContractCreateDto contractDto) // Измените здесь тоже
@@ -94,8 +131,6 @@ namespace Backend.Controllers
 
             return NoContent();
         }
-
-
 
         // DELETE: api/Contracts/5
         [HttpDelete("{id}")]

@@ -72,7 +72,8 @@ namespace Backend.Controllers
         // POST: api/Providers
         [HttpPost] public async Task<ActionResult<ProviderDto>> PostProvider(Provider provider) 
         { 
-            _context.Providers.Add(provider); await _context.SaveChangesAsync(); 
+            _context.Providers.Add(provider); 
+            await _context.SaveChangesAsync(); 
             return CreatedAtAction(nameof(GetProvider), 
                 new { id = provider.ProviderID }, 
                 new ProviderDto { ProviderID = provider.ProviderID, 

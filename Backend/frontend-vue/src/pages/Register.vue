@@ -83,10 +83,13 @@ async function register() {
     return
   }
 
-  const data = await res.json()
-  localStorage.setItem('auth', JSON.stringify(data))
-  router.push('/') // после регистрации сразу на главную
+  // регистрация прошла успешно → очищаем старый токен
+  localStorage.removeItem('auth')
+
+  // отправляем на страницу входа
+  router.push('/login')
 }
+
 </script>
 
 <style scoped>

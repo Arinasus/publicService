@@ -8,13 +8,8 @@ namespace Backend.Models
 
         [Required]
         public int UserID { get; set; }
-
         [Required]
         public int AddressID { get; set; }
-
-        [Required]
-        public int ServiceID { get; set; }
-
         [Required]
         public int ProviderID { get; set; }
 
@@ -30,7 +25,9 @@ namespace Backend.Models
 
         public User? User { get; set; }
         public Address? Address { get; set; }
-        public Service? Service { get; set; }
+
+        public ICollection<Service> Services { get; set; } = new List<Service>();
+        
         public Provider? Provider { get; set; }
 
         public static ValidationResult? ValidateStartDate(DateTime startDate, ValidationContext context)

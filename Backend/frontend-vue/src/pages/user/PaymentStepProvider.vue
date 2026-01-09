@@ -1,7 +1,8 @@
 <template>
   <div class="step">
     <h3>Реквизиты получателя</h3>
-    <p>Провайдер: {{ provider.providerName }}</p>
+    <p v-if="provider.providerName">Поставщик: {{ provider.providerName }}</p>
+    <p v-else>Поставщик не указан</p>
     <p>Контактное лицо: {{ provider.contactPerson }}</p>
     <p>Телефон: {{ provider.phoneNumber }}</p>
     <p>Email: {{ provider.email }}</p>

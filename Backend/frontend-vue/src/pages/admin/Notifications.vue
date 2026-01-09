@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-
+import { apiFetch } from '../../services/apiFetch' 
 // DTO для отображения уведомлений (из API)
 type Notification = {
   notificationID: number
@@ -46,7 +46,7 @@ const editingId = ref<number | null>(null)
 
 async function loadNotifications() {
   try {
-    const res = await fetch(import.meta.env.VITE_API_URL + '/Notifications')
+    const res = await apiFetch('/Notifications') 
     if (!res.ok) throw new Error(`Ошибка загрузки: ${res.status}`)
     notifications.value = await res.json()
   } catch (err: any) {
@@ -58,7 +58,7 @@ async function loadNotifications() {
 
 async function loadUsers() {
   try {
-    const res = await fetch(import.meta.env.VITE_API_URL + '/Users')
+    const res = await apiFetch('/Users') 
     if (!res.ok) throw new Error(`Ошибка загрузки пользователей: ${res.status}`)
     users.value = await res.json()
   } catch (err: any) {
@@ -78,7 +78,7 @@ async function saveNotification() {
         isRead: false,
         userID: u.userID
       }
-      await fetch(import.meta.env.VITE_API_URL + '/Notifications', {
+      await apiFetch('/Notifications', {   // ✅ заменили fetch
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
@@ -90,9 +90,8 @@ async function saveNotification() {
   }
 
   // обычное сохранение/редактирование
-  const url = import.meta.env.VITE_API_URL + '/Notifications' + (editingId.value ? `/${editingId.value}` : '')
+  const url = '/Notifications' + (editingId.value ? `/${editingId.value}` : '')
   const method = editingId.value ? 'PUT' : 'POST'
-
   const body = {
     notificationID: editingId.value ?? 0,
     notificationDate: form.value.notificationDate,
@@ -102,7 +101,7 @@ async function saveNotification() {
     userID: form.value.userID
   }
 
-  const res = await fetch(url, {
+  const res = await apiFetch(url, {   // ✅ заменили fetch
     method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)

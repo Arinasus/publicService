@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { apiFetch } from '../../services/apiFetch' 
 
 type Invoice = {
   invoiceID: number
@@ -17,7 +18,7 @@ const filterStatus = ref<'all' | 'paid' | 'unpaid'>('all')
 
 async function loadInvoices() {
   try {
-    const res = await fetch(import.meta.env.VITE_API_URL + '/Invoices')
+    const res = await apiFetch('/Invoices')
     if (!res.ok) throw new Error(`Ошибка загрузки: ${res.status}`)
     invoices.value = await res.json()
   } catch (err: any) {
@@ -29,11 +30,15 @@ async function loadInvoices() {
 
 async function confirmPayment(invoice: Invoice) {
   invoice.isPaid = true
-  await fetch(import.meta.env.VITE_API_URL + `/Invoices/${invoice.invoiceID}`, {
+  const res = await apiFetch(`/Invoices/${invoice.invoiceID}`, {   // ✅ заменили fetch
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(invoice)
   })
+  if (!res.ok) {
+    error.value = `Ошибка подтверждения: ${res.status}`
+    invoice.isPaid = false
+  }
 }
 
 // фильтрованные счета

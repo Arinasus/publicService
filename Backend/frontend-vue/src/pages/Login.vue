@@ -91,11 +91,13 @@
 
         <!-- Футер -->
         <div class="text-center mt-4">
-          <p class="text-muted small">
-            Нет аккаунта? 
-            <a href="#" class="text-decoration-none fw-medium link-green">Зарегистрироваться</a>
-          </p>
-        </div>
+      <p class="text-muted small">
+        Нет аккаунта?
+        <router-link to="/register" class="text-decoration-none fw-medium link-green">
+          Зарегистрироваться
+        </router-link>
+      </p>
+    </div>
       </div>
     </div>
   </div>
@@ -103,37 +105,39 @@
 
 <script setup lang="ts">
 import {ref} from 'vue'
-import {useRouter, useRoute} from 'vue-router'
+import {useRouter} from 'vue-router'
 
 const router = useRouter()
-const route = useRoute()
 const email = ref('')
 const password = ref('')
 
 
-async function login(event: SubmitEvent) {
-  event.preventDefault()
+async function login() {
   const res = await fetch(import.meta.env.VITE_API_URL + '/Auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email.value, password: password.value })
+    body: JSON.stringify({
+      email: email.value,
+      password: password.value
+    })
   })
-  if (!res.ok) throw new Error('Ошибка авторизации')
-  const auth = await res.json()
-  localStorage.setItem('token', auth.token)
-  localStorage.setItem('role', auth.role)
 
-  // загружаем профиль
-  const me = await fetch(import.meta.env.VITE_API_URL + '/Users/me', {
-    headers: { 'Authorization': 'Bearer ' + auth.token }
-  })
-  if (!me.ok) throw new Error('Не удалось загрузить профиль')
-  const profile = await me.json()
-  localStorage.setItem('profile', JSON.stringify(profile))
+  if (!res.ok) {
+    alert('Ошибка входа')
+    return
+  }
 
-  const redirect = (route.query.redirect as string) ?? (auth.role === 'admin' ? '/admin' : '/')
-  router.push(redirect)
+  const data = await res.json()
+  localStorage.setItem('auth', JSON.stringify({
+    token: data.token,
+    role: data.role
+  }))
+
+  // если был redirect в query — идём туда, иначе на главную
+  const redirect = router.currentRoute.value.query.redirect as string | undefined
+  router.push(redirect || '/')
 }
+
 
 
 </script>

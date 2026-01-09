@@ -6,7 +6,7 @@ using Backend.Profiles;
 using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.WebHost.UseUrls("http://0.0.0.0:8080");
+/*builder.WebHost.UseUrls("http://0.0.0.0:8080"); */
 QuestPDF.Settings.License = LicenseType.Community;
 // Добавляем CORS
 builder.Services.AddCors(options =>
@@ -21,7 +21,6 @@ builder.Services.AddCors(options =>
         });
 });
 // Контроллеры
-// Контроллеры с настройкой JSON в camelCase
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -33,7 +32,6 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Utilities API", Version = "v1" });
 
-    // 👇 Добавляем поддержку JWT авторизации
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "Введите токен в формате: Bearer {token}",
@@ -59,20 +57,22 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 
 builder.Services.AddDbContext<UtilitiesDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-
-
-// Подключение AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 var app = builder.Build();
 
-app.UseCors("AllowFrontend");
 app.UseRouting();
-// Применить миграции при запуске
+
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -87,10 +87,10 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"An error occurred while applying migrations: {ex.Message}");
     }
 }
-
+app.UseCors("AllowFrontend");
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage(); // Показывает детальные ошибки
+    app.UseDeveloperExceptionPage();
 }
 
 // Swagger

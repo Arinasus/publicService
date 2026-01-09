@@ -25,15 +25,20 @@ namespace Backend.Controllers
                     .ThenInclude(c => c.Provider)
                 .Include(i => i.Contract)
                     .ThenInclude(c => c.User)
+                        .ThenInclude(u => u.UserAddresses)
+                            .ThenInclude(ua => ua.Address)
+                .Include(i => i.Contract)
+                    .ThenInclude(c => c.Services)
                 .FirstOrDefaultAsync(i => i.InvoiceID == id);
 
             if (invoice == null)
                 return NotFound();
 
-            // 🔎 тянем показания по ContractID и периоду
-            var meterReadings = await _context.MeterReadings
-                .Where(m => m.ContractID == invoice.ContractID && m.ReadingDate.Month == invoice.IssueDate.Month && m.ReadingDate.Year == invoice.IssueDate.Year)
-                .ToListAsync();
+            // ищем последнее показание до даты выставления счета
+            var previousReadings = await _context.MeterReadings .Where(m => m.ContractID == invoice.ContractID && m.ReadingDate < invoice.IssueDate) .Include(m => m.Service)
+             .GroupBy(m => m.ServiceID) 
+             .Select(g => g.OrderByDescending(r => r.ReadingDate).FirstOrDefault()) 
+             .ToListAsync();
 
             var dto = new InvoiceDetailsDto
             {
@@ -41,43 +46,61 @@ namespace Backend.Controllers
                 ContractID = invoice.ContractID,
                 IssueDate = invoice.IssueDate,
                 DueDate = invoice.DueDate,
-                Period = invoice.Period,
+                Period = $"{invoice.IssueDate:yyyy-MM}", // нормализуем период
                 TotalAmount = invoice.TotalAmount,
                 IsPaid = invoice.IsPaid,
 
-                Provider = new ProviderDto
-                {
-                    ProviderID = invoice.Contract.Provider.ProviderID,
-                    ProviderName = invoice.Contract.Provider.ProviderName,
-                    ContactPerson = invoice.Contract.Provider.ContactPerson,
-                    PhoneNumber = invoice.Contract.Provider.PhoneNumber,
-                    Email = invoice.Contract.Provider.Email,
-                    IBAN = invoice.Contract.Provider.IBAN,
-                    BIC = invoice.Contract.Provider.BIC,
-                    UNP = invoice.Contract.Provider.UNP,
-                    Services = invoice.Contract.Provider.Services.Select(s => new ServiceDto
+                Provider = invoice.Contract?.Provider != null
+                    ? new ProviderDto
                     {
-                        ServiceID = s.ServiceID,
-                        ServiceName = s.ServiceName,
-                        UnitOfMeasure = s.UnitOfMeasure,
-                        Price = s.Price
-                    }).ToList()
-                },
+                        ProviderID = invoice.Contract.Provider.ProviderID,
+                        ProviderName = invoice.Contract.Provider.ProviderName,
+                        ContactPerson = invoice.Contract.Provider.ContactPerson,
+                        PhoneNumber = invoice.Contract.Provider.PhoneNumber,
+                        Email = invoice.Contract.Provider.Email,
+                        IBAN = invoice.Contract.Provider.IBAN,
+                        BIC = invoice.Contract.Provider.BIC,
+                        UNP = invoice.Contract.Provider.UNP,
+                        Services = invoice.Contract.Provider.Services.Select(s => new ServiceDto
+                        {
+                            ServiceID = s.ServiceID,
+                            ServiceName = s.ServiceName,
+                            UnitOfMeasure = s.UnitOfMeasure,
+                            Price = s.Price
+                        }).ToList()
+                    }
+                    : new ProviderDto
+                    {
+                        ProviderID = 0,
+                        ProviderName = "Поставщик не указан",
+                        ContactPerson = "",
+                        PhoneNumber = "",
+                        Email = "",
+                        IBAN = "",
+                        BIC = "",
+                        UNP = "",
+                        Services = new List<ServiceDto>()
+                    },
 
                 Payer = new PayerDto
                 {
                     Name = $"{invoice.Contract.User.FirstName} {invoice.Contract.User.LastName}",
+                    PayerNumber = invoice.Contract.ContractNumber,
                     Address = invoice.Contract.User.UserAddresses
-        .Where(ua => ua.IsPrimary)
-        .Select(ua => ua.Address != null ? ua.Address.FullAddress : "")
-        .FirstOrDefault() ?? "Адрес не указан"
+                        .Where(ua => ua.IsPrimary)
+                        .Select(ua => ua.Address != null ? ua.Address.FullAddress : "")
+                        .FirstOrDefault() ?? "Адрес не указан"
                 },
-                Meters = meterReadings.Select(m => new MeterReadingDto
-                {
-                    Name = "Показание", // можно расширить модель, если нужно хранить тип счётчика
-                    Previous = 0,       // если храним только текущее значение, то предыдущие считаем отдельно
-                    Current = m.ReadingValue
-                }).ToList()
+
+                Meters = previousReadings.Select(m => new MeterReadingDto
+{
+    ServiceName = m?.Service?.ServiceName ?? "Показание",
+    PreviousValue = m?.ReadingValue ?? 0,
+    CurrentValue = 0,
+    Unit = m?.Service?.UnitOfMeasure ?? "",
+    Price = m?.Service?.Price ?? 0
+}).ToList()
+
             };
 
             return dto;

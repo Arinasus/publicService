@@ -18,16 +18,20 @@ interface UserProfile {
 const me = ref<UserProfile | null>(null)
 const cards = ref<{ id: number; number: string; holder: string; expiry: string }[]>([])
 const newCard = ref({ number: '', holder: '', expiry: '' })
-const editingCardId = ref<number | null>(null)
+const newAddress = ref({
+  street: '',
+  city: '',
+  house: '',
+  apartment: '',
+  postalCode: ''
+})
 
 // загрузка профиля
+import { apiFetch } from '../../services/apiFetch'
+
 async function loadProfile() {
   try {
-    const res = await fetch(import.meta.env.VITE_API_URL + "/Users/me", {
-      headers: {
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
-      }
-    })
+    const res = await apiFetch('/Users/me')
     if (!res.ok) throw new Error(`Ошибка загрузки профиля: ${res.status}`)
     me.value = await res.json()
   } catch (err: any) {
@@ -35,14 +39,11 @@ async function loadProfile() {
   }
 }
 
+
 // загрузка карт
 async function loadCards() {
-  try {
-    const res = await fetch(import.meta.env.VITE_API_URL + "/Cards/me", {
-      headers: {
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
-      }
-    })
+try { 
+  const res = await apiFetch('/Cards/me')
     if (!res.ok) throw new Error(`Ошибка загрузки карт: ${res.status}`)
     const data = await res.json()
     cards.value = data.map((c: any) => ({
@@ -56,53 +57,25 @@ async function loadCards() {
   }
 }
 
-// добавить или обновить карту
+// добавить карту
 async function saveCard() {
   if (!newCard.value.number || !newCard.value.holder || !newCard.value.expiry) {
     alert('Заполните все поля')
     return
   }
+   else {
+    try {
+      const body = {
+        cardNumber: newCard.value.number,
+        expiryDate: newCard.value.expiry,
+        cardHolderName: newCard.value.holder
+      }
+      const res = await apiFetch('/Cards', {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+      })
 
-  if (editingCardId.value) {
-    // обновление
-    try {
-      const body = {
-        cardID: editingCardId.value,
-        cardNumber: newCard.value.number,
-        expiryDate: newCard.value.expiry,
-        cardHolderName: newCard.value.holder
-      }
-      const res = await fetch(import.meta.env.VITE_API_URL + `/Cards/${editingCardId.value}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify(body)
-      })
-      if (!res.ok) throw new Error(`Ошибка обновления: ${res.status}`)
-      await loadCards()
-      editingCardId.value = null
-      newCard.value = { number: '', holder: '', expiry: '' }
-    } catch (err: any) {
-      alert(`Ошибка обновления карты: ${err.message}`)
-    }
-  } else {
-    // добавление
-    try {
-      const body = {
-        cardNumber: newCard.value.number,
-        expiryDate: newCard.value.expiry,
-        cardHolderName: newCard.value.holder
-      }
-      const res = await fetch(import.meta.env.VITE_API_URL + "/Cards", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify(body)
-      })
       if (!res.ok) throw new Error(`Ошибка добавления: ${res.status}`)
       await loadCards()
       newCard.value = { number: '', holder: '', expiry: '' }
@@ -112,27 +85,68 @@ async function saveCard() {
   }
 }
 
-// редактировать карту
-function editCard(card: any) {
-  newCard.value = { number: card.number, holder: card.holder, expiry: card.expiry }
-  editingCardId.value = card.id
-}
-
 // удалить карту
 async function deleteCard(id: number) {
   try {
-    const res = await fetch(import.meta.env.VITE_API_URL + `/Cards/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
-      }
-    })
+    const res = await apiFetch(`/Cards/${id}`, { method: "DELETE" })
     if (!res.ok) throw new Error(`Ошибка удаления: ${res.status}`)
     await loadCards()
   } catch (err: any) {
     alert(`Ошибка удаления карты: ${err.message}`)
   }
 }
+async function addAddress() {
+  if (!newAddress.value.street || !newAddress.value.city || !newAddress.value.house) {
+    alert('Заполните обязательные поля: улица, город, дом')
+    return
+  }
+
+  try {
+    //создаём адрес
+    const resAddr = await apiFetch('/Addresses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        street: newAddress.value.street,
+        city: newAddress.value.city,
+        house: newAddress.value.house,
+        apartment: newAddress.value.apartment,
+        postalCode: newAddress.value.postalCode
+      })
+    })
+
+    if (!resAddr.ok) throw new Error(`Ошибка добавления адреса: ${resAddr.status}`)
+    const createdAddr = await resAddr.json()
+
+    //создаём связь с пользователем
+    const resLink = await apiFetch('/UserAddresses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userID: me.value?.userID,
+        addressID: createdAddr.addressID,
+        isPrimary: false
+      })
+    })
+
+    if (!resLink.ok) throw new Error(`Ошибка привязки адреса: ${resLink.status}`)
+
+    //обновляем список адресов в профиле
+    me.value?.addresses.push({
+      addressID: createdAddr.addressID,
+      addressLine: `${createdAddr.street}, ${createdAddr.house}, ${createdAddr.city}`,
+      isPrimary: false
+    })
+
+    // очистка формы
+    newAddress.value = { street: '', city: '', house: '', apartment: '', postalCode: '' }
+  } catch (err: any) {
+    alert(`Ошибка добавления адреса: ${err.message}`)
+  }
+}
+
+
+
 
 onMounted(async () => {
   await loadProfile()
@@ -152,22 +166,31 @@ onMounted(async () => {
         {{ addr.addressLine }} <span v-if="addr.isPrimary">⭐ основной</span>
       </li>
     </ul>
+    <h3>Добавить адрес</h3>
+<form @submit.prevent="addAddress">
+  <input v-model="newAddress.street" placeholder="Улица" required />
+  <input v-model="newAddress.city" placeholder="Город" required />
+  <input v-model="newAddress.house" placeholder="Дом" required />
+  <input v-model="newAddress.apartment" placeholder="Квартира" />
+  <input v-model="newAddress.postalCode" placeholder="Почтовый индекс" />
+  <button type="submit">Добавить</button>
+</form>
+
 
     <h3>Мои карты</h3>
     <ul>
       <li v-for="card in cards" :key="card.id">
         {{ card.number }} ({{ card.holder }}, {{ card.expiry }})
-        <button @click="editCard(card)">Изменить</button>
         <button @click="deleteCard(card.id)">Удалить</button>
       </li>
     </ul>
 
-    <h3>{{ editingCardId ? 'Редактировать карту' : 'Добавить карту' }}</h3>
+    <h3>Добавить карту</h3>
     <form @submit.prevent="saveCard">
       <input v-model="newCard.number" placeholder="Номер карты" />
       <input v-model="newCard.holder" placeholder="Владелец" />
       <input v-model="newCard.expiry" placeholder="Срок действия (MM/YY)" />
-      <button type="submit">{{ editingCardId ? 'Сохранить' : 'Добавить' }}</button>
+      <button type="submit">Добавить</button>
     </form>
   </div>
 </template>

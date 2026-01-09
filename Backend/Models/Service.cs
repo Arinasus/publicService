@@ -14,7 +14,10 @@ namespace Backend.Models
         [Range(0, 100000)]
         public decimal Price { get; set; }
         [Required]
-        public int ProviderID { get; set; }
+        public int? ProviderID { get; set; }
         public Provider? Provider { get; set; }
+        
+        public int? ContractID { get; set; }
+        public Contract? Contract { get; set; }
     }
 }

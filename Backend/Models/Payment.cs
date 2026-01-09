@@ -10,7 +10,7 @@ namespace Backend.Models
         public int InvoiceID { get; set; }
 
         [Required, DataType(DataType.Date)]
-        public DateTime PaymentDate { get; set; }
+        public DateTime? PaymentDate { get; set; }
 
         [Range(0, double.MaxValue)]
         public decimal PaymentAmount { get; set; }

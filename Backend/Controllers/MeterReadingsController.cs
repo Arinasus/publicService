@@ -50,6 +50,7 @@ namespace Backend.Controllers
         public async Task<ActionResult<MeterReading>> PostMeterReading(MeterReading meterReading)
         {
             _context.MeterReadings.Add(meterReading);
+            meterReading.ReadingDate = DateTime.SpecifyKind(meterReading.ReadingDate, DateTimeKind.Utc);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetMeterReading), new { id = meterReading.ReadingID }, meterReading);
@@ -65,6 +66,7 @@ namespace Backend.Controllers
             }
 
             _context.Entry(meterReading).State = EntityState.Modified;
+            meterReading.ReadingDate = DateTime.SpecifyKind(meterReading.ReadingDate, DateTimeKind.Utc);
             await _context.SaveChangesAsync();
 
             return NoContent();

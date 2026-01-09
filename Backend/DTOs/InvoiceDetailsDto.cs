@@ -17,15 +17,9 @@
 
     public class PayerDto
     {
+        public string PayerNumber { get; set; } = string.Empty;
+
         public string Name { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
     }
-
-    public class MeterReadingDto
-    {
-        public string Name { get; set; } = string.Empty;
-        public decimal Previous { get; set; }
-        public decimal Current { get; set; }
-    }
-
 }

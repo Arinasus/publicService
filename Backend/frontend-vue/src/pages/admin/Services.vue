@@ -1,30 +1,56 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { apiFetch } from '../../services/apiFetch'
 
 type Service = {
   serviceID: number
   serviceName: string
   unitOfMeasure: string
   price: number
+  providerID: number
+  providerName?: string
   editing?: boolean
 }
 
+type Provider = {
+  providerID: number
+  providerName: string
+}
+
 const services = ref<Service[]>([])
+const providers = ref<Provider[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 
-const newService = ref<Service>({
-  serviceID: 0,
+const newService = ref<Omit<Service, 'serviceID' | 'providerName'>>({
   serviceName: '',
   unitOfMeasure: '',
-  price: 0
+  price: 0,
+  providerID: 0
 })
+
+async function loadProviders() {
+  try {
+    const res = await apiFetch('/Providers')
+    if (!res.ok) throw new Error(`Ошибка загрузки провайдеров: ${res.status}`)
+    const data = await res.json()
+    providers.value = Array.isArray(data) ? data : []
+    // Устанавливаем первого провайдера по умолчанию
+if (providers.value.length > 0) {
+  newService.value.providerID = providers.value[0]?.providerID ?? 0
+}
+
+  } catch (err: any) {
+    console.error('Ошибка загрузки провайдеров:', err)
+  }
+}
 
 async function loadServices() {
   try {
-    const res = await fetch(import.meta.env.VITE_API_URL + '/Services')
+    const res = await apiFetch('/Services')
     if (!res.ok) throw new Error(`Ошибка загрузки: ${res.status}`)
-    services.value = await res.json()
+    const data = await res.json()
+    services.value = Array.isArray(data) ? data : []
   } catch (err: any) {
     error.value = err.message
   } finally {
@@ -34,40 +60,118 @@ async function loadServices() {
 
 async function addService() {
   try {
-    const res = await fetch(import.meta.env.VITE_API_URL + '/Services', {
+    // Валидация
+    if (!newService.value.serviceName?.trim()) {
+      error.value = 'Введите название услуги'
+      return
+    }
+    if (!newService.value.unitOfMeasure?.trim()) {
+      error.value = 'Введите единицу измерения'
+      return
+    }
+    if (newService.value.price <= 0) {
+      error.value = 'Цена должна быть больше 0'
+      return
+    }
+    if (!newService.value.providerID) {
+      error.value = 'Выберите провайдера'
+      return
+    }
+
+    const res = await apiFetch('/Services', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        serviceName: newService.value.serviceName,
-        unitOfMeasure: newService.value.unitOfMeasure,
-        price: newService.value.price
+        serviceName: newService.value.serviceName.trim(),
+        unitOfMeasure: newService.value.unitOfMeasure.trim(),
+        price: newService.value.price,
+        providerID: newService.value.providerID
       })
     })
-    if (!res.ok) throw new Error(`Ошибка добавления: ${res.status}`)
-    const created = await res.json()
+    
+    if (!res.ok) {
+      const errorText = await res.text()
+      throw new Error(`Ошибка добавления: ${res.status} - ${errorText}`)
+    }
+    
+    const created: Service = await res.json()
     services.value.push(created)
-    newService.value = { serviceID: 0, serviceName: '', unitOfMeasure: '', price: 0 }
+    
+    // Сброс формы
+    newService.value = { 
+      serviceName: '', 
+      unitOfMeasure: '', 
+      price: 0,
+      providerID: providers.value.length > 0 ? providers.value[0]!.providerID : 0
+    }
+    error.value = null
+    
   } catch (err: any) {
     error.value = err.message
   }
 }
 
 async function updateService(service: Service) {
-  await fetch(import.meta.env.VITE_API_URL + `/Services/${service.serviceID}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(service)
-  })
-  service.editing = false
+  try {
+    const res = await apiFetch(`/Services/${service.serviceID}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        serviceID: service.serviceID,
+        serviceName: service.serviceName,
+        unitOfMeasure: service.unitOfMeasure,
+        price: service.price,
+        providerID: service.providerID
+      })
+    })
+    
+    if (!res.ok) {
+      const errorText = await res.text()
+      throw new Error(`Ошибка обновления: ${res.status} - ${errorText}`)
+    }
+    
+    service.editing = false
+    error.value = null
+    
+  } catch (err: any) {
+    error.value = err.message
+  }
 }
 
 async function deleteService(id: number) {
   if (!confirm('Вы уверены, что хотите удалить услугу?')) return
-  await fetch(import.meta.env.VITE_API_URL + `/Services/${id}`, { method: 'DELETE' })
-  services.value = services.value.filter(s => s.serviceID !== id)
+  
+  try {
+    const res = await apiFetch(`/Services/${id}`, { method: 'DELETE' })
+    
+    if (!res.ok) {
+      const errorText = await res.text()
+      throw new Error(`Ошибка удаления: ${res.status} - ${errorText}`)
+    }
+    
+    services.value = services.value.filter(s => s.serviceID !== id)
+    error.value = null
+    
+  } catch (err: any) {
+    error.value = err.message
+  }
 }
 
-onMounted(loadServices)
+function getProviderName(providerID: number): string {
+  const provider = providers.value.find(p => p.providerID === providerID)
+  return provider ? provider.providerName : 'Неизвестно'
+}
+
+onMounted(async () => {
+  try {
+    await loadProviders()
+    await loadServices()
+  } catch (err: any) {
+    error.value = err.message
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <template>
@@ -79,17 +183,53 @@ onMounted(loadServices)
     <div v-else>
       <!-- форма добавления -->
       <form @submit.prevent="addService" class="row g-2 mb-4">
-        <div class="col-md-3">
-          <input v-model="newService.serviceName" class="form-control" placeholder="Название" required />
+        <div class="col-md-2">
+          <input 
+            v-model="newService.serviceName" 
+            class="form-control" 
+            placeholder="Название" 
+            required 
+          />
+        </div>
+        <div class="col-md-2">
+          <input 
+            v-model="newService.unitOfMeasure" 
+            class="form-control" 
+            placeholder="Ед. изм." 
+            required 
+          />
+        </div>
+        <div class="col-md-2">
+          <input 
+            v-model.number="newService.price" 
+            type="number" 
+            min="0" 
+            step="0.01"
+            class="form-control" 
+            placeholder="Цена" 
+            required 
+          />
         </div>
         <div class="col-md-3">
-          <input v-model="newService.unitOfMeasure" class="form-control" placeholder="Единица измерения" required />
+          <select 
+            v-model.number="newService.providerID" 
+            class="form-select" 
+            required
+          >
+            <option value="0" disabled>Выберите провайдера</option>
+            <option 
+              v-for="provider in providers" 
+              :key="provider.providerID"
+              :value="provider.providerID"
+            >
+              {{ provider.providerName }}
+            </option>
+          </select>
         </div>
         <div class="col-md-3">
-          <input v-model.number="newService.price" type="number" class="form-control" placeholder="Цена" required />
-        </div>
-        <div class="col-md-3">
-          <button type="submit" class="btn btn-success w-100">Добавить услугу</button>
+          <button type="submit" class="btn btn-success w-100">
+            Добавить услугу
+          </button>
         </div>
       </form>
 
@@ -101,6 +241,7 @@ onMounted(loadServices)
             <th>Название</th>
             <th>Ед. изм.</th>
             <th>Цена</th>
+            <th>Провайдер</th>
             <th>Действия</th>
           </tr>
         </thead>
@@ -117,14 +258,56 @@ onMounted(loadServices)
             </td>
             <td>
               <span v-if="!s.editing">{{ s.price }} ₽</span>
-              <input v-else type="number" v-model.number="s.price" class="form-control" />
+              <input 
+                v-else 
+                type="number" 
+                v-model.number="s.price" 
+                min="0"
+                step="0.01"
+                class="form-control" 
+              />
+            </td>
+            <td>
+              <span v-if="!s.editing">{{ getProviderName(s.providerID) }}</span>
+              <select v-else v-model.number="s.providerID" class="form-select">
+                <option value="0" disabled>Выберите провайдера</option>
+                <option 
+                  v-for="provider in providers" 
+                  :key="provider.providerID"
+                  :value="provider.providerID"
+                >
+                  {{ provider.providerName }}
+                </option>
+              </select>
             </td>
             <td>
               <div class="d-flex gap-2">
-                <button v-if="!s.editing" @click="s.editing = true" class="btn btn-warning btn-sm">Редактировать</button>
-                <button v-else @click="updateService(s)" class="btn btn-success btn-sm">Сохранить</button>
-                <button @click="deleteService(s.serviceID)" class="btn btn-danger btn-sm">Удалить</button>
+                <button 
+                  v-if="!s.editing" 
+                  @click="s.editing = true" 
+                  class="btn btn-warning btn-sm"
+                >
+                  Редактировать
+                </button>
+                <button 
+                  v-else 
+                  @click="updateService(s)" 
+                  class="btn btn-success btn-sm"
+                >
+                  Сохранить
+                </button>
+                <button 
+                  @click="deleteService(s.serviceID)" 
+                  class="btn btn-danger btn-sm"
+                >
+                  Удалить
+                </button>
               </div>
+            </td>
+          </tr>
+          <tr v-if="services.length === 0">
+            <td colspan="6" class="text-center text-muted">
+              Нет услуг. Добавьте первую услугу.
             </td>
           </tr>
         </tbody>
@@ -134,6 +317,7 @@ onMounted(loadServices)
 </template>
 
 <style scoped>
+/* Оставьте ваши стили без изменений */
 :root {
   --color-lemon: #FFFACD;
   --color-green-light: #A3D9A5;

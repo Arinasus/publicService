@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { apiFetch } from '../../services/apiFetch'
 
 type Notification = {
   notificationID: number
@@ -19,9 +20,7 @@ const sortBy = ref<'date' | 'type' | 'status'>('date')
 // загрузка
 onMounted(async () => {
   try {
-    const res = await fetch(import.meta.env.VITE_API_URL + '/Notifications', {
-      headers: { 'Content-Type': 'application/json' },
-    })
+    const res = await apiFetch('/Notifications') 
     if (!res.ok) throw new Error(`Ошибка загрузки: ${res.status}`)
     notifications.value = await res.json()
   } catch (err: any) {
