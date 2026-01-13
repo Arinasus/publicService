@@ -20,7 +20,7 @@ namespace Backend.DTOs
         public int UserID { get; set; }
         public string UserName { get; set; } = string.Empty;
         public int AddressID { get; set; }
-        public string Address { get; set; } = string.Empty; 
+        public string AddressLine  { get; set; } = string.Empty; 
         public int ProviderID { get; set; }
         public string ProviderName { get; set; } = string.Empty;
 

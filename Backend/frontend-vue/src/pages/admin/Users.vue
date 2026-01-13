@@ -63,6 +63,7 @@ async function changeRole(user: User, role: 'admin'|'user') {
 </script>
 
 <template>
+      <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <div class="page">
     <h2>Пользователи</h2>
 
@@ -86,30 +87,155 @@ async function changeRole(user: User, role: 'admin'|'user') {
           <td>{{ u.email }}</td>
           <td>{{ u.firstName }}</td>
           <td>{{ u.lastName }}</td>
-          <td>{{ u.role === 'admin' ? '⚙️ Администратор' : '👤 Пользователь' }}</td>
           <td>
-  <button class="btn-delete" @click="deleteUser(u)">Удалить</button>
-<button class="btn-admin" @click="changeRole(u, 'admin')">Назначить админом</button>
-<button class="btn-user" @click="changeRole(u, 'user')">Сделать пользователем</button>
-
-</td>
-
+            <span class="role" :class="u.role">
+              <span class="material-symbols-outlined">
+                {{ u.role === 'admin' ? 'shield_person' : 'person' }}
+              </span>
+              {{ u.role === 'admin' ? 'Администратор' : 'Пользователь' }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn-delete" @click="deleteUser(u)">
+              <span class="material-symbols-outlined">delete</span> Удалить
+            </button>
+            <button class="btn-admin" @click="changeRole(u, 'admin')">
+              <span class="material-symbols-outlined">shield_person</span> Сделать администатором
+            </button>
+            <button class="btn-user" @click="changeRole(u, 'user')">
+              <span class="material-symbols-outlined">person</span> Сделать пользователем
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>
   </div>
 </template>
 
+
 <style scoped>
-.page { padding: 20px; }
-.error { color: red; margin-bottom: 10px; }
-.users { width: 100%; border-collapse: collapse; }
-.users th, .users td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-.users th { background-color: #f4f4f4; }
-button { padding: 6px 12px; background-color: #d9534f; color: white; border: none; border-radius: 4px; cursor: pointer; }
-button:hover { background-color: #c9302c; }
-.btn-delete { background-color: #d9534f; }
-.btn-admin { background-color: #5bc0de; }
-.btn-user { background-color: #5cb85c; }
+.page {
+  padding: 30px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  margin-bottom: 25px;
+}
+
+.error {
+  background: #fbe7e9;
+  color: var(--color-accent);
+  padding: 15px;
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--color-accent);
+  margin-bottom: 20px;
+}
+
+/* Таблица */
+.users {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.users th {
+  background: var(--color-navy);
+  color: white;
+  padding: 12px;
+  text-align: center;
+}
+
+.users td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+}
+
+.users tr:hover {
+  background: #f9f9f9;
+}
+
+/* Роль */
+.role {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.role.admin {
+  color: var(--color-navy);
+}
+
+.role.user {
+  color: var(--color-text);
+}
+
+.role .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* Кнопки */
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+}
+
+button .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* Удалить */
+.btn-delete {
+  background: #f44336;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #d32f2f;
+  transform: translateY(-2px);
+}
+
+/* Админ */
+.btn-admin {
+  background: #1976d2;
+  color: white;
+}
+
+.btn-admin:hover {
+  background: #0d47a1;
+  transform: translateY(-2px);
+}
+
+/* Пользователь */
+.btn-user {
+  background: #4caf50;
+  color: white;
+}
+
+.btn-user:hover {
+  background: #2e7d32;
+  transform: translateY(-2px);
+}
 
 </style>

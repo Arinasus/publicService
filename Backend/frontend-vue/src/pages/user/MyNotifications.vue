@@ -20,7 +20,7 @@ const sortBy = ref<'date' | 'type' | 'status'>('date')
 // загрузка
 onMounted(async () => {
   try {
-    const res = await apiFetch('/Notifications') 
+    const res = await apiFetch('/Notifications/me') 
     if (!res.ok) throw new Error(`Ошибка загрузки: ${res.status}`)
     notifications.value = await res.json()
   } catch (err: any) {
@@ -85,16 +85,23 @@ async function deleteAllRead() {
 // иконки
 function getIcon(type: string) {
   switch (type) {
-    case 'Info': return 'ℹ️'
-    case 'Warning': return '⚠️'
-    case 'Payment': return '💰'
-    case 'Reminder': return '⏰'
-    default: return '📩'
+    case 'Info': 
+      return 'info'
+    case 'Warning': 
+      return 'warning'
+    case 'Payment': 
+      return 'payments'
+    case 'Reminder': 
+      return 'alarm'
+    default: 
+      return 'notifications'
   }
 }
+
 </script>
 
 <template>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <div class="page">
     <h2>Мои уведомления</h2>
 
@@ -110,18 +117,19 @@ function getIcon(type: string) {
     <div v-if="loading">Загрузка...</div>
 
     <ul v-else class="notifications">
-      <li v-for="n in sortedNotifications" :key="n.notificationID" :class="{ read: n.isRead, unread: !n.isRead }">
-        <span class="icon">{{ getIcon(n.notificationType) }}</span>
-        <span class="date">{{ new Date(n.notificationDate).toLocaleString('ru-RU') }}</span>
-        <span class="type">[{{ n.notificationType }}]</span>
-        <span class="message">
-          {{ n.notificationText }}
-          <span v-if="n.lastUpdatedDate">
-            (Изменено {{ new Date(n.lastUpdatedDate).toLocaleString('ru-RU') }})
-          </span>
-        </span>
-        <button v-if="!n.isRead" @click="markAsRead(n.notificationID)">Отметить прочитанным</button>
-      </li>
+     <li v-for="n in sortedNotifications" :key="n.notificationID" :class="{ read: n.isRead, unread: !n.isRead }">
+  <span class="icon material-symbols-outlined">{{ getIcon(n.notificationType) }}</span>
+  <span class="date">{{ new Date(n.notificationDate).toLocaleString('ru-RU') }}</span>
+  <span class="type">[{{ n.notificationType }}]</span>
+  <span class="message">
+    {{ n.notificationText }}
+    <span v-if="n.lastUpdatedDate">
+      (Изменено {{ new Date(n.lastUpdatedDate).toLocaleString('ru-RU') }})
+    </span>
+  </span>
+  <button v-if="!n.isRead" @click="markAsRead(n.notificationID)">Отметить прочитанным</button>
+</li>
+
     </ul>
 
     <h3>Архив</h3>
@@ -134,15 +142,157 @@ function getIcon(type: string) {
 </template>
 
 <style scoped>
-.page { padding: 20px; }
-.actions { margin-bottom: 10px; display: flex; gap: 10px; }
-.error { color: red; margin-bottom: 10px; }
-.notifications { list-style: none; padding: 0; }
-.notifications li { padding: 8px; border-bottom: 1px solid #ddd; display: flex; align-items: center; gap: 10px; }
-.notifications li.read { color: #888; }
-.notifications li.unread { background: #ffecec; font-weight: bold; }
-.date { margin-right: 10px; font-size: 0.9em; color: #555; }
-.type { margin-right: 10px; font-weight: bold; }
-button { margin-left: auto; }
-.icon { margin-right: 8px; }
+.page {
+  padding: 30px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Заголовок */
+h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  margin-bottom: 25px;
+}
+
+/* Панель действий */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.actions button {
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-navy);
+  background: white;
+  color: var(--color-navy);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.actions button:hover {
+  background: var(--color-navy);
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Ошибки */
+.error {
+  background: #fbe7e9;
+  color: var(--color-accent);
+  padding: 15px;
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--color-accent);
+  margin-bottom: 20px;
+}
+
+/* Список уведомлений */
+.notifications {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.notifications li {
+  background: white;
+  padding: 18px 20px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 15px;
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  transition: var(--transition);
+}
+
+.notifications li:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Прочитанные / непрочитанные */
+.notifications li.unread {
+  border-left: 4px solid var(--color-accent);
+  background: #fff6f7;
+}
+.icon.material-symbols-outlined {
+  font-size: 28px;
+  color: var(--color-navy);
+  margin-top: 2px;
+}
+
+.notifications li.read {
+  opacity: 0.7;
+}
+
+/* Иконка */
+.icon {
+  font-size: 1.6rem;
+  margin-top: 2px;
+}
+
+/* Дата */
+.date {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  min-width: 140px;
+}
+
+/* Тип */
+.type {
+  font-weight: 600;
+  color: var(--color-navy);
+  min-width: 110px;
+}
+
+/* Текст уведомления */
+.message {
+  flex: 1;
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+/* Кнопка "прочитано" */
+.notifications button {
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-accent);
+  background: white;
+  color: var(--color-accent);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.notifications button:hover {
+  background: var(--color-accent);
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Архив */
+h3 {
+  margin-top: 40px;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+ul.archive {
+  list-style: none;
+  padding: 0;
+}
+
+.archive li {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+  color: var(--color-muted);
+}
+
 </style>

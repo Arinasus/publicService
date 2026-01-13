@@ -2,6 +2,7 @@
 {
     public class MeterReadingDto
     {
+        public int ServiceID { get; set; }
         public string ServiceName { get; set; } = string.Empty; 
         public decimal PreviousValue { get; set; }
         public decimal CurrentValue { get; set; }

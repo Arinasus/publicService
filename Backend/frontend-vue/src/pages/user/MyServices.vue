@@ -8,7 +8,7 @@ type Contract = {
   contractStartDate: string
   contractEndDate: string
   userName: string
-  address: string
+  addressLine: string
   providerName: string
   services: Array<{
     serviceID: number
@@ -112,23 +112,25 @@ async function addService(serviceID: number) {
   availableServices.value = availableServices.value.filter(s => s.serviceID !== serviceID)
 }
 
-async function removeService(contractID: number) { 
-  if (!confirm('Вы уверены, что хотите отказаться от услуги?')) return 
-  
-  await apiFetch(`/Contracts/${contractID}`, { method: 'DELETE' }) 
-  
-  // Обновляем список контрактов
-  contracts.value = contracts.value.filter(c => c.contractID !== contractID)
-  
-  // Нужно перезагрузить доступные услуги
-  const resServices = await apiFetch('/Services/available')
-  if (resServices.ok) {
-    availableServices.value = await resServices.json()
+async function removeService(contractID: number) {
+  if (!confirm('Вы уверены, что хотите отказаться от услуги и удалить контракт?')) return
+  try {
+    const res = await apiFetch(`/Contracts/${contractID}`, { method: "DELETE" })
+    if (!res.ok) throw new Error(`Ошибка удаления: ${res.status}`)
+    // обновляем список контрактов
+    contracts.value = contracts.value.filter(c => c.contractID !== contractID)
+    // обновляем список доступных услуг
+    const resServices = await apiFetch('/Services/available')
+    if (resServices.ok) availableServices.value = await resServices.json()
+  } catch (err: any) {
+    alert(`Ошибка удаления контракта: ${err.message}`)
   }
 }
+
 </script>
 
 <template>
+
   <div class="page container py-4">
     <h2 class="text-green-dark mb-4">Мои услуги</h2>
 
@@ -164,7 +166,9 @@ async function removeService(contractID: number) {
                 <span v-else class="text-muted">Нет услуг</span>
               </td>
               <td>{{ c.providerName }}</td>
-              <td>{{ c.address }}</td>
+              <td style="max-width:250px; white-space:normal; word-wrap:break-word;">
+  {{ c.addressLine }}
+</td>
               <td>
                 {{ new Date(c.contractStartDate).toLocaleDateString('ru-RU') }} –
                 {{ c.contractEndDate ? new Date(c.contractEndDate).toLocaleDateString('ru-RU') : '—' }}
@@ -219,3 +223,109 @@ async function removeService(contractID: number) {
     </div>
   </div>
 </template>
+
+<style scoped>
+  .page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+
+/* Заголовки */
+h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  margin-bottom: 20px;
+}
+
+/* Карточки */
+.card {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 30px;
+  border: none;
+}
+
+.card-body {
+  padding: 25px;
+}
+
+/* Таблицы */
+.contracts {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.contracts thead th {
+  background: var(--color-navy);
+  color: white;
+  padding: 14px 18px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.3px;
+}
+
+.contracts tbody td {
+  padding: 14px 18px;
+  border-bottom: 1px solid #eee;
+  font-size: 0.95rem;
+}
+
+.contracts tbody tr:hover {
+  background: rgba(47, 54, 80, 0.05);
+}
+
+/* Кнопки */
+.btn-danger.btn-sm {
+  background: var(--color-accent);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 6px 14px;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.btn-danger.btn-sm:hover {
+  background: #b8323d;
+  transform: translateY(-2px);
+}
+
+.btn-success.btn-sm {
+  background: #2f5d3a;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 6px 14px;
+  font-weight: 600;
+  color: white;
+  transition: var(--transition);
+}
+
+.btn-success.btn-sm:hover {
+  background: #3c6f47;
+  transform: translateY(-2px);
+}
+
+/* Пустой список */
+.contracts tbody td.text-center {
+  padding: 30px;
+  font-size: 1rem;
+  color: var(--color-muted);
+}
+
+/* Алерты */
+.alert-danger {
+  background: #fbe7e9;
+  color: var(--color-accent);
+  border-left: 4px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+</style>

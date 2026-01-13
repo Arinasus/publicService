@@ -156,8 +156,12 @@ onMounted(() => {
 </script>
 
 <template>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
   <div class="page">
-    <h2>Управление уведомлениями</h2>
+    <h2>
+      <span class="material-symbols-outlined">notifications</span>
+      Управление уведомлениями
+    </h2>
 
     <div v-if="error" class="error">{{ error }}</div>
     <div v-if="loading">Загрузка...</div>
@@ -175,21 +179,28 @@ onMounted(() => {
       <label>
         <input type="checkbox" v-model="form.isRead" /> Прочитано
       </label>
-       <select v-model="form.userID" :disabled="sendToAll">
+      <select v-model="form.userID" :disabled="sendToAll">
         <option disabled value="0">Выберите пользователя</option>
         <option v-for="u in users" :key="u.userID" :value="u.userID">
           {{ u.firstName }} {{ u.lastName }} ({{ u.email }})
         </option>
       </select>
-        <label v-if="!editingId">
-            <input type="checkbox" v-model="sendToAll" /> Отправить всем пользователям
-        </label>
-      <button @click="saveNotification">{{ editingId ? 'Сохранить' : 'Добавить' }}</button>
-      <button @click="resetForm" v-if="editingId">Отмена</button>
+      <label v-if="!editingId">
+        <input type="checkbox" v-model="sendToAll" /> Отправить всем пользователям
+      </label>
+      <div class="actions">
+        <button class="btn-save" @click="saveNotification">
+          <span class="material-symbols-outlined">{{ editingId ? 'save' : 'add_circle' }}</span>
+          {{ editingId ? 'Сохранить' : 'Добавить' }}
+        </button>
+        <button v-if="editingId" class="btn-cancel" @click="resetForm">
+          <span class="material-symbols-outlined">cancel</span> Отмена
+        </button>
+      </div>
     </div>
 
     <!-- список -->
-    <table>
+    <table class="contracts">
       <thead>
         <tr>
           <th>ID</th><th>Дата</th><th>Тип</th><th>Текст</th><th>Прочитано</th><th>Email</th><th>Последнее изменение</th><th>Действия</th>
@@ -201,20 +212,19 @@ onMounted(() => {
           <td>{{ new Date(n.notificationDate).toLocaleString('ru-RU') }}</td>
           <td>{{ n.notificationType }}</td>
           <td>
-                {{ n.notificationText }}
-                <span v-if="n.lastUpdatedDate"> (Изменено {{ new Date(n.lastUpdatedDate).toLocaleString('ru-RU') }})</span>
+            {{ n.notificationText }}
+            <span v-if="n.lastUpdatedDate"> (Изменено {{ new Date(n.lastUpdatedDate).toLocaleString('ru-RU') }})</span>
           </td>
           <td>{{ n.isRead ? 'Да' : 'Нет' }}</td>
           <td>{{ n.userEmail }}</td>
-          <td>
-        <span v-if="n.lastUpdatedDate">
-          {{ new Date(n.lastUpdatedDate).toLocaleString('ru-RU') }}
-        </span>
-        <span v-else>-</span>
-      </td>
-       <td>
-            <button @click="editNotification(n)">✏️</button>
-            <button @click="deleteNotification(n.notificationID)">❌</button>
+          <td>{{ n.lastUpdatedDate ? new Date(n.lastUpdatedDate).toLocaleString('ru-RU') : '-' }}</td>
+          <td class="actions">
+            <button class="btn-edit" @click="editNotification(n)">
+              <span class="material-symbols-outlined">edit</span> Редактировать
+            </button>
+            <button class="btn-delete" @click="deleteNotification(n.notificationID)">
+              <span class="material-symbols-outlined">delete</span> Удалить
+            </button>
           </td>
         </tr>
       </tbody>
@@ -222,6 +232,137 @@ onMounted(() => {
   </div>
 </template>
 
+
 <style scoped>
-.error { color: red; margin-bottom: 10px; }
+.page {
+  padding: 30px;
+  max-width: 1000px;
+  margin: 0 auto;
+  font-family: 'Inter', 'Roboto', sans-serif;
+}
+
+h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  margin-bottom: 25px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.error {
+  background: #fbe7e9;
+  color: var(--color-accent);
+  padding: 15px;
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--color-accent);
+  margin-bottom: 20px;
+}
+
+/* Форма */
+.form {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 25px;
+}
+
+.form h3 {
+  margin-bottom: 15px;
+  color: var(--color-navy);
+}
+
+.form select,
+.form textarea,
+.form input[type="text"],
+.form input[type="number"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid #ccc;
+}
+
+.form textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* Кнопки */
+button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+button .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.btn-save {
+  background: #4caf50;
+  color: white;
+}
+.btn-save:hover { background: #388e3c; transform: translateY(-1px); }
+
+.btn-cancel {
+  background: #9e9e9e;
+  color: white;
+}
+.btn-cancel:hover { background: #616161; transform: translateY(-1px); }
+
+.btn-edit {
+  background: #ff9800;
+  color: white;
+}
+.btn-edit:hover { background: #f57c00; transform: translateY(-1px); }
+
+.btn-delete {
+  background: #f44336;
+  color: white;
+}
+.btn-delete:hover { background: #d32f2f; transform: translateY(-1px); }
+
+/* Таблица */
+.contracts {
+  width: 100%;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border: 2px solid var(--color-navy);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.contracts th {
+  background: var(--color-navy);
+  color: white;
+  padding: 12px;
+  text-align: center;
+}
+
+.contracts td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+}
+
+.contracts tr:hover {
+  background: #f9f9f9;
+}
+
 </style>

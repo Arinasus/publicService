@@ -1,59 +1,224 @@
 :root {
-  --color-lemon: #FFFACD;          /* лимонный фон */
-  --color-green-light: #A3D9A5;    /* светло-зелёный */
-  --color-green-deep: #4B8F6B;     /* глубокий зелёный */
-  --color-green-dark: #2F5D3A;     /* тёмный зелёный */
-  --color-yellow-green: #C4D96F;   /* жёлто-зелёный */
-  --color-warm-warning: #D9A76F;   /* тёплый акцент */
+  /* Цвета — более мягкие и современные */
+  --color-bg: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-navy: #2f3650;
+  --color-accent: #ca3e49;
+  --color-accent-soft: #e8c4c7;
+  --color-warm: #b47e58;
+  --color-text: #2f3650;
+  --color-muted: #6c757d;
 
-  --font-main: 'Inter', 'Roboto', sans-serif;
-  --shadow-soft: 0 2px 6px rgba(0, 0, 0, 0.1);
+  /* Шрифты */
+  --font-main: 'Inter', sans-serif;
+  --font-heading: 'Montserrat', sans-serif;
+
+  /* Тени — мягкие, современные */
+  --shadow-sm: 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+
+  /* Скругления */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 28px;
+
+  /* Анимации */
+  --transition: 0.25s ease;
 }
 
-body {
-  font-family: var(--font-main);
-  background-color: var(--color-lemon); /* лимонный фон для всей страницы */
+/* Сброс */
+* {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
-/* единый стиль для всех таблиц */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  border: 2px solid var(--color-green-deep);
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: var(--color-lemon); /* фон таблицы лимонный */
-  box-shadow: var(--shadow-soft);
+/* Базовая структура */
+body {
+  font-family: var(--font-main);
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+  min-height: 100vh;
 }
 
-/* шапка таблицы */
-table thead {
-  background-color: var(--color-green-light);
-  color: var(--color-green-dark);
-  text-transform: uppercase;
+/* Навигация */
+.navbar-brand {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--color-navy) !important;
+}
+
+.nav-link {
+  font-weight: 500;
+  color: var(--color-navy) !important;
+  transition: var(--transition);
+}
+
+.nav-link:hover {
+  color: var(--color-accent) !important;
+}
+
+/* Кнопки */
+.btn-primary {
+  background: var(--color-accent);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0.7rem 1.8rem;
   font-weight: 600;
+  color: white;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
 }
 
-/* ячейки */
-table th, table td {
-  padding: 12px;
-  text-align: center;
-  border: 1px solid var(--color-green-deep);
+.btn-primary:hover {
+  background: #b8323d;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
-/* строки */
-table tbody tr:nth-child(even) {
-  background-color: #fff; /* чередование строк: белый */
+.btn-danger {
+  background: #d6454f;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0.7rem 1.8rem;
+  font-weight: 600;
+  color: white;
+  transition: var(--transition);
 }
 
-table tbody tr:nth-child(odd) {
-  background-color: var(--color-lemon); /* и лимонный */
+.btn-danger:hover {
+  background: #c03943;
+  transform: translateY(-2px);
 }
 
-table tbody tr:hover {
-  background-color: var(--color-yellow-green);
-  color: var(--color-green-dark);
-  transition: 0.3s ease;
+/* Карточки */
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  border: none;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+}
+
+.card-header {
+  background: var(--color-navy);
+  color: white;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  padding: 1.2rem 1.5rem;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+/* Формы */
+.form-control,
+.form-select {
+  border: 2px solid #e3e3e3;
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  transition: var(--transition);
+  background: white;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(202, 62, 73, 0.15);
+}
+
+.form-label {
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+/* Таблицы */
+.table {
+  background: white;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.table thead th {
+  background: var(--color-navy);
+  color: white;
+  font-weight: 600;
+  padding: 1rem;
+  border: none;
+}
+
+.table tbody tr {
+  transition: var(--transition);
+}
+
+.table tbody tr:hover {
+  background: rgba(47, 54, 80, 0.06);
+}
+
+.table td {
+  padding: 1rem;
+  border-top: 1px solid #e6e6e6;
+}
+
+/* Алерты */
+.alert {
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  font-weight: 500;
+}
+
+.alert-info {
+  background: #e8eef7;
+  color: var(--color-navy);
+  border-left: 4px solid var(--color-navy);
+}
+
+.alert-danger {
+  background: #fbe7e9;
+  color: var(--color-accent);
+  border-left: 4px solid var(--color-accent);
+}
+
+.alert-success {
+  background: #e6f4ea;
+  color: #2f5d3a;
+  border-left: 4px solid #4b8f6b;
+}
+
+/* Заголовки */
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+h1 {
+  font-size: 2.2rem;
+}
+
+/* Ссылки */
+a {
+  color: var(--color-accent);
+  transition: var(--transition);
+}
+
+a:hover {
+  color: #b8323d;
+}
+
+/* Анимации */
+.fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

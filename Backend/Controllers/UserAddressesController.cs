@@ -3,7 +3,7 @@ using Backend.Models;
 using Backend.DTOs;
 using Backend.Data;
 using Microsoft.EntityFrameworkCore;
-
+using Backend.Services;
 namespace Backend.Controllers
 {
     [ApiController]
@@ -56,5 +56,32 @@ namespace Backend.Controllers
 
             return Ok(userAddress);
         }
+        [HttpPost("{addressId}/make-primary")]
+public async Task<IActionResult> MakePrimary(int addressId)
+{
+    var user = await AuthHelpers.GetUserByBearerTokenAsync(_context, Request);
+    if (user == null) return Unauthorized("Нет или неверный токен");
+
+    var userAddress = await _context.UserAddresses
+        .FirstOrDefaultAsync(ua => ua.AddressID == addressId && ua.UserID == user.UserID);
+
+    if (userAddress == null)
+        return NotFound("Адрес не найден");
+
+    // Снимаем флаг с других адресов
+    var allAddresses = await _context.UserAddresses
+        .Where(ua => ua.UserID == user.UserID)
+        .ToListAsync();
+
+    foreach (var addr in allAddresses)
+        addr.IsPrimary = false;
+
+    userAddress.IsPrimary = true;
+
+    await _context.SaveChangesAsync();
+
+    return Ok("Адрес успешно сделан основным");
+}
+
     }
 }

@@ -18,14 +18,59 @@ namespace Backend.Services
                     page.DefaultTextStyle(x => x.FontSize(14));
 
                     page.Content().Column(col =>
-                    {
-                        col.Item().Text(receipt.StoreName).Bold().FontSize(20);
-                        col.Item().Text($"Дата: {receipt.Date}");
-                        col.Item().Text($"Клиент: {receipt.Customer}");
-                        col.Item().Text($"Счёт №: {receipt.InvoiceNumber}");
-                        col.Item().Text($"Сумма: {receipt.Amount} BYN");
-                        col.Item().Text($"Метод оплаты: {receipt.Method}");
-                    });
+{
+    col.Item().Text("КАРТ-ЧЕК").Bold().FontSize(22).AlignCenter();
+    col.Item().Text($"Номер операции: {receipt.OperationId}");
+    col.Item().Text($"Дата/Время: {receipt.Date}");
+    col.Item().Text($"Метод оплаты: {receipt.Method}");
+    col.Item().Text($"Плательщик: {receipt.Customer}");
+    col.Item().Text($"Лицевой счёт: {receipt.ContractNumber}");
+    col.Item().Text($"Получатель: {receipt.ProviderName}");
+    col.Item().Text($"УНП: {receipt.ProviderUNP}");
+    col.Item().Text($"IBAN: {receipt.ProviderIBAN}");
+    col.Item().Text("");
+
+    // таблица показаний
+    col.Item().Table(table =>
+    {
+       table.ColumnsDefinition(columns =>
+{
+    columns.RelativeColumn(2); // услуга
+    columns.RelativeColumn(1); // предыдущее
+    columns.RelativeColumn(1); // текущее
+    columns.RelativeColumn(1); // расход
+    columns.RelativeColumn(1); // тариф
+    columns.RelativeColumn(2); // сумма
+});
+
+
+        table.Header(header =>
+        {
+            header.Cell().Text("Услуга").Bold();
+            header.Cell().Text("Предыдущее").Bold();
+            header.Cell().Text("Текущее").Bold();
+            header.Cell().Text("Расход").Bold();
+            header.Cell().Text("Тариф").Bold();
+            header.Cell().Text("Начислено").Bold();
+        });
+
+        foreach (var m in receipt.Meters)
+        {
+            var consumption = m.CurrentValue - m.PreviousValue;
+            var amount = consumption * m.Price;
+
+            table.Cell().Text(m.ServiceName);
+            table.Cell().Text(m.PreviousValue.ToString("F2"));
+            table.Cell().Text(m.CurrentValue.ToString("F2"));
+            table.Cell().Text($"{consumption:F2} {m.Unit}");
+            table.Cell().Text($"{m.Price:F2} BYN");
+            table.Cell().Text($"{amount:F2} BYN");
+        }
+    });
+
+    col.Item().Text($"Итого к оплате: {receipt.Amount:F2} BYN").Bold().FontSize(18).AlignRight();
+});
+
                 });
             });
 

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Backend.Data;
 using Backend.Models;
 using Backend.DTOs;
-
+using Backend.Services;
 namespace Backend.Controllers
 {
     [Route("api/[controller]")]
@@ -59,16 +59,29 @@ namespace Backend.Controllers
                 UserEmail = notification.User != null ? notification.User.Email : string.Empty
             };
         }
-        [HttpGet("me")]
-        public async Task<IActionResult> GetMyNotifications()
-        {
-            var userId = GetUserIdFromToken();
-            var notifications = await _context.Notifications
-            .Where(n => n.UserID == userId)
-            .ToListAsync();
+[HttpGet("me")]
+public async Task<ActionResult<IEnumerable<NotificationDto>>> GetMyNotifications()
+{
+    var user = await AuthHelpers.GetUserByBearerTokenAsync(_context, Request);
+    if (user == null) return Unauthorized("Нет или неверный токен");
 
-        return Ok(notifications);
-        }
+    var notifications = await _context.Notifications
+        .Where(n => n.UserID == user.UserID)
+        .Include(n => n.User)
+        .Select(n => new NotificationDto
+        {
+            NotificationID = n.NotificationID,
+            NotificationDate = n.NotificationDate,
+            NotificationType = n.NotificationType,
+            NotificationText = n.NotificationText,
+            IsRead = n.IsRead,
+            UserEmail = n.User != null ? n.User.Email : string.Empty,
+            LastUpdatedDate = n.LastUpdatedDate
+        })
+        .ToListAsync();
+
+    return Ok(notifications);
+}
 
         // POST: api/Notifications
         [HttpPost]

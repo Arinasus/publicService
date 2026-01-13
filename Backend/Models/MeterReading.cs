@@ -5,7 +5,6 @@ namespace Backend.Models
     {
         [Key]
         public int ReadingID { get; set; }
-
         [Required]
         public int ContractID { get; set; }
         [Required]

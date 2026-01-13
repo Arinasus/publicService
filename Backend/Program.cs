@@ -8,6 +8,8 @@ using QuestPDF.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 /*builder.WebHost.UseUrls("http://0.0.0.0:8080"); */
 QuestPDF.Settings.License = LicenseType.Community;
+QuestPDF.Settings.EnableDebugging = true;
+
 // Добавляем CORS
 builder.Services.AddCors(options =>
 {
@@ -21,11 +23,11 @@ builder.Services.AddCors(options =>
         });
 });
 // Контроллеры
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-    });
+// builder.Services.AddControllers()
+//     .AddJsonOptions(options =>
+//     {
+//         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+//     });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -72,7 +74,8 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 var app = builder.Build();
 
 app.UseRouting();
-
+app.UseCors("AllowFrontend");
+/*
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -87,7 +90,7 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"An error occurred while applying migrations: {ex.Message}");
     }
 }
-app.UseCors("AllowFrontend");
+*/
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();

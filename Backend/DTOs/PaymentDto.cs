@@ -6,9 +6,17 @@
         public DateTime PaymentDate { get; set; }
         public decimal PaymentAmount { get; set; }
         public string PaymentMethod { get; set; } = string.Empty;
-
         public int InvoiceID { get; set; }
         public string ContractNumber { get; set; } = string.Empty; 
         public string CardNumber { get; set; } = string.Empty;
+        public int? CardID { get; set; } 
+        public List<MeterReadingDto> Meters { get; set; } = new();
     }
+    public class PaymentCreateDto
+{
+    public decimal PaymentAmount { get; set; }
+    public string PaymentMethod { get; set; } = "Card";
+    public int? CardID { get; set; }
+    public List<MeterReadingDto> Meters { get; set; } = new();
+}
 }

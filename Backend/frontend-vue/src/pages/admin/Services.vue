@@ -173,10 +173,13 @@ onMounted(async () => {
   }
 })
 </script>
-
 <template>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
   <div class="page container py-4">
-    <h2 class="text-green-dark mb-4">Управление услугами</h2>
+    <h2 class="text-green-dark mb-4">
+      <span class="material-symbols-outlined">build</span>
+      Управление услугами
+    </h2>
 
     <div v-if="error" class="alert alert-danger">{{ error }}</div>
     <div v-else-if="loading" class="text-muted">Загрузка...</div>
@@ -184,53 +187,28 @@ onMounted(async () => {
       <!-- форма добавления -->
       <form @submit.prevent="addService" class="row g-2 mb-4">
         <div class="col-md-2">
-          <input 
-            v-model="newService.serviceName" 
-            class="form-control" 
-            placeholder="Название" 
-            required 
-          />
+          <input v-model="newService.serviceName" class="form-control" placeholder="Название" required />
         </div>
         <div class="col-md-2">
-          <input 
-            v-model="newService.unitOfMeasure" 
-            class="form-control" 
-            placeholder="Ед. изм." 
-            required 
-          />
+          <input v-model="newService.unitOfMeasure" class="form-control" placeholder="Ед. изм." required />
         </div>
         <div class="col-md-2">
-          <input 
-            v-model.number="newService.price" 
-            type="number" 
-            min="0" 
-            step="0.01"
-            class="form-control" 
-            placeholder="Цена" 
-            required 
-          />
+          <input v-model.number="newService.price" type="number" min="0" step="0.01" class="form-control" placeholder="Цена" required />
         </div>
         <div class="col-md-3">
-          <select 
-            v-model.number="newService.providerID" 
-            class="form-select" 
-            required
-          >
+          <select v-model.number="newService.providerID" class="form-select" required>
             <option value="0" disabled>Выберите провайдера</option>
-            <option 
-              v-for="provider in providers" 
-              :key="provider.providerID"
-              :value="provider.providerID"
-            >
+            <option v-for="provider in providers" :key="provider.providerID" :value="provider.providerID">
               {{ provider.providerName }}
             </option>
           </select>
         </div>
         <div class="col-md-3">
-          <button type="submit" class="btn btn-success w-100">
-            Добавить услугу
-          </button>
-        </div>
+  <button type="submit" class="btn-add w-100">
+    <span class="material-symbols-outlined">add_circle</span>
+    Добавить услугу
+  </button>
+</div>
       </form>
 
       <!-- таблица -->
@@ -257,53 +235,31 @@ onMounted(async () => {
               <input v-else v-model="s.unitOfMeasure" class="form-control" />
             </td>
             <td>
-              <span v-if="!s.editing">{{ s.price }} ₽</span>
-              <input 
-                v-else 
-                type="number" 
-                v-model.number="s.price" 
-                min="0"
-                step="0.01"
-                class="form-control" 
-              />
+              <span v-if="!s.editing">{{ s.price }} BYN</span>
+              <input v-else type="number" v-model.number="s.price" min="0" step="0.01" class="form-control" />
             </td>
             <td>
               <span v-if="!s.editing">{{ getProviderName(s.providerID) }}</span>
               <select v-else v-model.number="s.providerID" class="form-select">
                 <option value="0" disabled>Выберите провайдера</option>
-                <option 
-                  v-for="provider in providers" 
-                  :key="provider.providerID"
-                  :value="provider.providerID"
-                >
+                <option v-for="provider in providers" :key="provider.providerID" :value="provider.providerID">
                   {{ provider.providerName }}
                 </option>
               </select>
             </td>
             <td>
-              <div class="d-flex gap-2">
-                <button 
-                  v-if="!s.editing" 
-                  @click="s.editing = true" 
-                  class="btn btn-warning btn-sm"
-                >
-                  Редактировать
-                </button>
-                <button 
-                  v-else 
-                  @click="updateService(s)" 
-                  class="btn btn-success btn-sm"
-                >
-                  Сохранить
-                </button>
-                <button 
-                  @click="deleteService(s.serviceID)" 
-                  class="btn btn-danger btn-sm"
-                >
-                  Удалить
-                </button>
-              </div>
-            </td>
+  <div class="actions">
+    <button v-if="!s.editing" @click="s.editing = true" class="btn-edit btn-sm">
+      <span class="material-symbols-outlined">edit</span> Редактировать
+    </button>
+    <button v-else @click="updateService(s)" class="btn-save btn-sm">
+      <span class="material-symbols-outlined">save</span> Сохранить
+    </button>
+    <button @click="deleteService(s.serviceID)" class="btn-delete btn-sm">
+      <span class="material-symbols-outlined">delete</span> Удалить
+    </button>
+  </div>
+</td>
           </tr>
           <tr v-if="services.length === 0">
             <td colspan="6" class="text-center text-muted">
@@ -316,39 +272,16 @@ onMounted(async () => {
   </div>
 </template>
 
+
 <style scoped>
-/* Оставьте ваши стили без изменений */
-:root {
-  --color-lemon: #FFFACD;
-  --color-green-light: #A3D9A5;
-  --color-green-deep: #4B8F6B;
-  --color-green-dark: #2F5D3A;
-  --color-yellow-green: #C4D96F;
-}
-
-.page {
-  background-color: var(--color-lemon);
-  min-height: 100vh;
-  font-family: 'Inter', 'Roboto', sans-serif;
-}
-
-.text-green-dark {
-  color: var(--color-green-dark);
-}
-
 .contracts {
   border: 2px solid var(--color-green-deep);
-  border-radius: 8px;
+  border-radius: 12px; /* чуть больше радиус */
   overflow: hidden;
   background-color: var(--color-lemon);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.table-header {
-  background-color: var(--color-green-light);
-  color: var(--color-green-dark);
-  text-transform: uppercase;
-  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  margin: 20px auto; /* центрируем */
+  width: 100%;
 }
 
 .contracts th,
@@ -358,17 +291,75 @@ onMounted(async () => {
   border: 1px solid var(--color-green-deep);
 }
 
-.contracts tbody tr:nth-child(even) {
-  background-color: #fff;
+/* убираем конфликт с bootstrap */
+.table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
 }
 
-.contracts tbody tr:nth-child(odd) {
-  background-color: var(--color-lemon);
+.btn-add {
+  display: inline-flex;              /* иконка + текст в одну линию */
+  align-items: center;               /* вертикальное выравнивание */
+  justify-content: center;           /* центрируем содержимое */
+  gap: 8px;                          /* отступ между иконкой и текстом */
+  background: linear-gradient(135deg, var(--color-navy), #3a4569);
+  color: white;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  padding: 12px 20px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
 }
 
-.contracts tbody tr:hover {
-  background-color: var(--color-yellow-green);
-  color: var(--color-green-dark);
-  transition: 0.3s ease;
+.btn-add .material-symbols-outlined {
+  font-size: 22px;                   /* чуть больше иконка */
+  line-height: 1;                    /* убираем лишние отступы */
 }
+
+.btn-add:hover {
+  background: #2f3650;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transform: translateY(-1px);       /* лёгкий подъём, не дерганый */
+}
+
+
+/* Кнопки действий */
+.actions {
+  display: flex;
+  gap: 12px; /* больше отступ между кнопками */
+  justify-content: center;
+}
+
+.btn-edit,
+.btn-save,
+.btn-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.btn-edit .material-symbols-outlined,
+.btn-save .material-symbols-outlined,
+.btn-delete .material-symbols-outlined {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.btn-edit { background: #ff9800; color: white; }
+.btn-edit:hover { background: #f57c00; transform: translateY(-1px); }
+
+.btn-save { background: #4caf50; color: white; }
+.btn-save:hover { background: #388e3c; transform: translateY(-1px); }
+
+.btn-delete { background: #f44336; color: white; }
+.btn-delete:hover { background: #d32f2f; transform: translateY(-1px); }
+
+
 </style>

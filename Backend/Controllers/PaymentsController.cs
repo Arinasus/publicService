@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Backend.Data;
 using Backend.Models;
 using Backend.DTOs;
-
+using Backend.Services;
 namespace Backend.Controllers
 {
     [Route("api/[controller]")]
@@ -43,6 +43,32 @@ namespace Backend.Controllers
 
             return payment;
         }
+        [HttpGet("me")]
+public async Task<IActionResult> GetMyPayments()
+{
+    var user = await AuthHelpers.GetUserByBearerTokenAsync(_context, Request);
+    if (user == null) return Unauthorized("Нет или неверный токен");
+
+    var payments = await _context.Payments
+        .Include(p => p.Invoice)
+            .ThenInclude(i => i.Contract)
+        .Include(p => p.Card)
+        .Where(p => p.Invoice.Contract.UserID == user.UserID)
+        .Select(p => new PaymentDto
+        {
+            PaymentID = p.PaymentID,
+            InvoiceID = p.InvoiceID,
+            PaymentAmount = p.PaymentAmount,
+            PaymentMethod = p.PaymentMethod,
+            PaymentDate = (DateTime)p.PaymentDate,
+            ContractNumber = p.Invoice.Contract.ContractNumber,
+            CardNumber = p.Card != null ? p.Card.CardNumber : null
+        })
+        .ToListAsync();
+
+    return Ok(payments);
+}
+
         [HttpGet("user/{userId}")]
         public async Task<ActionResult<IEnumerable<PaymentDto>>> GetPaymentsByUser(int userId)
         {

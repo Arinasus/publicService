@@ -124,14 +124,28 @@ onMounted(async () => {
 </script>
 
 <template>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   <div>
     <h2>Админ: Панель</h2>
-    <ul>
-      <li>Пользователей: {{ stats.users }}</li>
-      <li>Админов: {{ stats.admins }}</li>
-      <li>Услуг: {{ stats.services }}</li>
-      <li>Неоплаченные счета: {{ stats.unpaidInvoices }}</li>
-    </ul>
+    <ul class="stats">
+  <li>
+    <span class="material-symbols-outlined">group</span>
+    Пользователей: {{ stats.users }}
+  </li>
+  <li>
+    <span class="material-symbols-outlined">shield_person</span>
+    Админов: {{ stats.admins }}
+  </li>
+  <li>
+    <span class="material-symbols-outlined">build</span>
+    Услуг: {{ stats.services }}
+  </li>
+  <li>
+    <span class="material-symbols-outlined">receipt_long</span>
+    Неоплаченные счета: {{ stats.unpaidInvoices }}
+  </li>
+</ul>
+
 
     <h3 class="mt-4">Управление провайдерами</h3>
 
@@ -162,7 +176,10 @@ onMounted(async () => {
           <input v-model="newProvider.unp" class="form-control" placeholder="УНП" required />
         </div>
         <div class="col-md-3">
-          <button type="submit" class="btn btn-success w-100">Добавить</button>
+         <button type="submit" class="btn btn-success w-100">
+  <span class="material-symbols-outlined">add_business</span> Добавить
+</button>
+
         </div>
       </form>
 
@@ -213,10 +230,17 @@ onMounted(async () => {
               <input v-else v-model="p.unp" class="form-control" />
             </td>
             <td>
-              <button v-if="!p.editing" @click="p.editing = true" class="btn btn-warning btn-sm">Редактировать</button>
-              <button v-else @click="updateProvider(p)" class="btn btn-success btn-sm">Сохранить</button>
-              <button @click="deleteProvider(p.providerID)" class="btn btn-danger btn-sm">Удалить</button>
-            </td>
+  <button v-if="!p.editing" @click="p.editing = true" class="btn btn-warning btn-sm">
+    <span class="material-symbols-outlined">edit</span> Редактировать
+  </button>
+  <button v-else @click="updateProvider(p)" class="btn btn-success btn-sm">
+    <span class="material-symbols-outlined">save</span> Сохранить
+  </button>
+  <button @click="deleteProvider(p.providerID)" class="btn btn-danger btn-sm">
+    <span class="material-symbols-outlined">delete</span> Удалить
+  </button>
+</td>
+
           </tr>
           <tr v-if="providers.length === 0">
             <td colspan="9" class="text-center text-muted">Нет провайдеров</td>
@@ -226,3 +250,172 @@ onMounted(async () => {
     </div>
   </div>
 </template>
+<style scoped>
+  .stats li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stats .material-symbols-outlined {
+  font-size: 22px;
+  color: var(--color-navy);
+}
+
+.btn .material-symbols-outlined {
+  font-size: 18px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+  /* Общий контейнер */
+h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  margin-bottom: 25px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+}
+
+ul li {
+  background: #f8f9fa;
+  padding: 10px 15px;
+  border-radius: var(--radius-md);
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Заголовок раздела */
+h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-navy);
+  margin: 30px 0 15px;
+}
+
+/* Ошибки */
+.alert-danger {
+  background: #fbe7e9;
+  color: var(--color-accent);
+  padding: 15px;
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--color-accent);
+  margin-bottom: 20px;
+}
+
+/* Форма добавления */
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+form input {
+  flex: 1;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  border: 2px solid #e0e0e0;
+  transition: var(--transition);
+}
+
+form input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(202, 62, 73, 0.15);
+}
+
+form button {
+  flex: 1;
+  background: linear-gradient(135deg, var(--color-navy), #3a4569);
+  color: white;
+  font-weight: 600;
+  padding: 12px;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+form button:hover {
+  background: #2f3650;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Таблица */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+table th {
+  background: var(--color-navy);
+  color: white;
+  padding: 12px;
+  text-align: left;
+}
+
+table td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+table tr:hover {
+  background: #f9f9f9;
+}
+
+/* Кнопки действий */
+.btn-warning {
+  background: #ff9800;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-warning:hover {
+  background: #f57c00;
+}
+
+.btn-success {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-success:hover {
+  background: #388e3c;
+}
+
+.btn-danger {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-danger:hover {
+  background: #d32f2f;
+}
+
+</style>
